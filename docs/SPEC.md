@@ -1,7 +1,7 @@
 # SPEC — 채용공고 분석 및 지원 관리 에이전트
 
 > 상태: Spec 초안 v1.2 (2026-10-28, 선호 조건, 비용 관리, 평가 준비 추가) · 프로젝트명: fitcheck · 작성: JJonyeok
-> 다음 단계: 이 문서를 기준으로 Task 분해 → Impl → QA
+> 다음 단계: [TASKS.md](TASKS.md) 기준으로 Impl → QA
 
 ---
 
@@ -290,4 +290,4 @@
 | `competencies.example.yaml` | 공개용 예시. 내 실제 정보는 `competencies.local.yaml` (Git 제외) | 완료 |
 | `fitcheck/config.py` | local 파일이 있으면 local, 없으면 예시를 불러옴 | 완료 |
 | `docs/fit_mockup.html` | 화면 목업 (샘플 데이터, 보류 인정 시 실제 재판정) | 완료 |
-| 그래프 노드, API, 화면 | | Task 단계에서 분해 |
+| 그래프 노드, API, 화면 | | [TASKS.md](TASKS.md)로 분해 완료, 구현 예정 |
