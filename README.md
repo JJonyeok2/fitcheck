@@ -19,7 +19,7 @@ IT 직무 채용공고를 넣으면 **지원할 수 있는 공고인지, 얼마�
 **LLM은 읽고 해석하는 일만, 판정은 규칙 코드가 합니다.**
 공고 문장 구조화와 이미지 읽기, 요건과 프로젝트의 의미 비교는 LLM이 하고, 지원 가능 여부와 충족률, 라벨은 코드가 정합니다. 같은 공고에는 항상 같은 판정이 나와야 하고, 판정 이유를 설명할 수 있어야 하기 때문입니다.
 
-자세한 흐름과 규칙은 [docs/SPEC.md](docs/SPEC.md), 화면 목업은 [docs/fit_mockup.html](docs/fit_mockup.html)에 있습니다.
+자세한 흐름과 규칙은 [docs/SPEC.md](docs/SPEC.md), 에이전트 설계도는 [docs/AGENT_DESIGN.md](docs/AGENT_DESIGN.md), 화면 목업은 [docs/fit_mockup.html](docs/fit_mockup.html)에 있습니다.
 
 ## 구조
 

@@ -123,7 +123,7 @@ T4, T8, T9 ── T17          T15, T16 ── T18 ── T19
 - [ ] 마감 지난 공고 → 지원 불가로 저장, 매칭 노드 미실행
 
 ### T7. 그래프 골격과 CLI — 파트: 에이전트
-**지시**
+**지시** (설계: [AGENT_DESIGN.md](AGENT_DESIGN.md) 2, 4, 5, 6, 12장)
 - `fitcheck/graph.py`: LangGraph `StateGraph`. Spec 4.3의 노드 순서와 조건부 엣지. 아직 없는 노드(이미지, 매칭 등)는 통과만 하는 자리표시자.
 - SQLite 체크포인터, 공고마다 `thread_id`.
 - `interrupt` 2곳: `human_verify`, `decide`.

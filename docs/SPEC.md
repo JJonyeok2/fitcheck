@@ -62,6 +62,8 @@
 
 ## 4. 에이전트 설계 (LangGraph)
 
+> 그래프 구조, 상태 필드별 담당 노드, 분기 함수, 멈춤 지점 데이터 형식, LLM 호출 계약, 실패 처리는 [AGENT_DESIGN.md](AGENT_DESIGN.md)에 있다.
+
 ### 4.1 왜 LangGraph인가
 
 | 필요한 것 | LangGraph에서 쓰는 기능 |
