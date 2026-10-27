@@ -1,0 +1,31 @@
+# 비밀 값
+.env
+.env.*
+!.env.example
+
+# 개인 데이터 (역량 DB, 지원 이력, 수집한 공고)
+data/
+competencies.local.yaml
+competencies.yaml
+*.sqlite
+*.db
+
+# 공고 이미지, 스크린샷
+captures/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Node
+node_modules/
+.next/
+playwright-report/
+test-results/
+
+# 평가용 공고 원문과 내 기록 (템플릿과 README만 올린다)
+eval/postings/
+eval/labels.csv
+eval/time_log.csv

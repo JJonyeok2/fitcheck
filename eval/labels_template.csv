@@ -1,0 +1,2 @@
+id,source,input_type,url,company,title,job_category,is_it,experience_level,min_years,min_degree,degree_preferred_only,graduation_target,military,location,employment_type,deadline,required_certificates,language_requirement,salary_min,salary_max,can_apply,my_judgement,memo
+ex01,원티드,text,https://example.com/1,예시회사,AX 엔지니어,AX/자동화,Y,신입/경력,,학사,N,무관,무관,서울 강남구,정규직,2026-11-30,,,,,Y,합격권,예시 행. 실제 공고로 교체

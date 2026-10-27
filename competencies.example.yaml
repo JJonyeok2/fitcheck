@@ -1,0 +1,53 @@
+# 역량 DB 예시 — 이 파일을 competencies.local.yaml로 복사해서 내 정보로 바꾼다.
+# competencies.local.yaml은 Git에 올라가지 않는다.
+#
+# 원칙: skills에는 "이 프로젝트에서 본인이 직접 쓴 기술"만 넣는다.
+#       팀 프로젝트에서 다른 팀원이 맡은 기술은 넣지 않는다.
+#       연락처, 주민번호 같은 개인정보는 넣지 않는다.
+
+constraints:
+  experience_years: 0
+  degree: 학사                          # 무관 / 고졸 / 전문학사 / 학사 / 석사 / 박사
+  major: 컴퓨터공학
+  graduated: true
+  graduation_date: 2025-08-31
+  military_done: true                   # 군필 또는 면제
+  certificates: []                      # 취득 완료한 것만
+  pending_certificates:                 # 필수인 공고는 발표일과 마감일을 비교해 보류 또는 탈락
+    - name: 정보처리기사
+      expected_date: null
+  languages:
+    - language: 영어
+      level: 일상회화                    # 기초 / 독해/작문 / 일상회화 / 비즈니스 / 원어민
+      tests: []                         # 예: {test: TOEIC, score: 800}, {test: OPIc, grade: IM2}
+  allowed_regions: [서울, 성남]          # 판교, 분당 등 동네 이름은 filters.REGION_ALIASES로 매칭
+  excluded_employment_types: [파트타임, 계약직]
+
+preferences:                            # 라벨에는 영향 없음. '선호 n/m'으로만 표시
+  min_salary: 3000                      # 만원 단위
+  want_mentor: true
+  company_stages: [Series A, Series B, 상장/대기업]   # 비어 있으면 제한 없음
+  work_modes: []                        # 비어 있으면 제한 없음. 예: [하이브리드, 원격]
+
+projects:
+  - id: sample-chatbot
+    name: 사내 문서 Q&A 챗봇
+    period: 2026.03 ~ 2026.04
+    team_size: 1
+    my_role: 1인 개발
+    contributions:
+      - 사내 문서를 임베딩해 검색하는 RAG 파이프라인 구축
+      - Slack 봇으로 질문을 받아 답변
+    results:
+      - 팀원 5명 실사용, 문서 찾는 시간 단축
+    skills: [Python, RAG, LangChain, Slack API]
+
+  - id: sample-dashboard
+    name: 매출 대시보드 (팀 프로젝트)
+    period: 2026.01 ~ 2026.02
+    team_size: 4
+    my_role: 프론트엔드 개발       # 팀 프로젝트면 내가 맡은 부분만
+    contributions:
+      - React로 차트 화면 구현
+    results: []
+    skills: [React, TypeScript]     # 백엔드는 다른 팀원 담당이라 제외

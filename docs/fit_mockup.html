@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>공고 FIT 진단</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f5f7; --card:#fff; --soft:#f6f7f9; --line:#e6e8ec; --ink:#1b1d21; --sub:#6b7280;
+  --pass:#2563eb; --pass-bg:#e8effd; --stable:#e07b10; --stable-bg:#fdf1e3;
+  --low:#d23f36; --low-bg:#fbeceb; --block:#7b8190; --block-bg:#eef0f3; --brand:#1e2533;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111316; --card:#1a1d21; --soft:#22262b; --line:#2e3238; --ink:#eceef1; --sub:#9aa1ab;
+  --pass:#6b9cf0; --pass-bg:#1a2742; --stable:#f0a24a; --stable-bg:#36260f;
+  --low:#ec6c64; --low-bg:#3a1c1a; --block:#8d94a0; --block-bg:#2a2e34; --brand:#e8ebf0;}}
+:root[data-theme="dark"]{
+  --bg:#111316; --card:#1a1d21; --soft:#22262b; --line:#2e3238; --ink:#eceef1; --sub:#9aa1ab;
+  --pass:#6b9cf0; --pass-bg:#1a2742; --stable:#f0a24a; --stable-bg:#36260f;
+  --low:#ec6c64; --low-bg:#3a1c1a; --block:#8d94a0; --block-bg:#2a2e34; --brand:#e8ebf0;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans KR",system-ui,sans-serif;font-size:14px}
+button{font:inherit;color:inherit}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 16px;display:grid;grid-template-columns:330px 1fr 390px;gap:16px}
+@media (max-width:1100px){.wrap{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;min-width:0}
+h2{font-size:15px;margin:0 0 12px}
+
+/* 입력 */
+.input{display:flex;gap:6px;margin-bottom:8px}
+.input input{flex:1;min-width:0;border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:10px;padding:9px 10px;font:inherit;font-size:13px}
+.input button{border:0;background:var(--brand);color:var(--card);border-radius:10px;padding:0 12px;cursor:pointer;font-weight:700}
+.demo{font-size:12px;color:var(--sub);margin-bottom:12px}
+.demo button{border:0;background:none;color:var(--pass);cursor:pointer;padding:0;text-decoration:underline}
+.toast{display:none;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.6;margin-bottom:12px;background:var(--block-bg);color:var(--ink)}
+.toast.on{display:block}
+
+/* 목록 */
+.list{padding:16px}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.filters button{border:1px solid var(--line);background:var(--card);color:var(--sub);border-radius:999px;padding:5px 11px;font-size:12px;cursor:pointer}
+.filters button.on{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.item{padding:12px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:6px}
+.item:hover{background:var(--soft)}
+.item.on{border-color:var(--line);background:var(--soft)}
+.item .co{font-size:12px;color:var(--sub)}
+.item .ti{font-weight:700;margin:2px 0 6px}
+.badges{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.band{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px}
+.b-합격권{color:var(--pass);background:var(--pass-bg)} .b-안정권{color:var(--stable);background:var(--stable-bg)}
+.b-불합격권{color:var(--low);background:var(--low-bg)} .b-지원불가{color:var(--block);background:var(--block-bg)}
+.mini{font-size:11px;color:var(--sub);border:1px solid var(--line);border-radius:999px;padding:1px 7px}
+.mini.warn{color:var(--low);border-color:var(--low)}
+.mini.re{color:var(--pass);border-color:var(--pass)}
+
+/* 본문 */
+.post{padding:24px}
+.post .co{color:var(--sub);font-size:13px}
+.post h1{font-size:22px;margin:6px 0 18px}
+.kv{display:grid;grid-template-columns:90px 1fr;row-gap:10px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.kv span:nth-child(odd){color:var(--sub)}
+.raw{margin-top:18px;line-height:1.7;color:var(--sub);white-space:pre-line}
+
+/* FIT 패널 */
+.fit{padding:20px;align-self:start;position:sticky;top:16px}
+.fit h2{font-size:17px}
+.banner{border:1px solid var(--line);background:var(--soft);border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.6;margin-bottom:12px}
+.banner b{color:var(--ink)}
+.banner.re{border-color:var(--pass);background:var(--pass-bg)}
+.tops{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.top{background:var(--soft);border-radius:14px;padding:14px;text-align:center}
+.top .cap{font-size:12px;color:var(--sub);margin-bottom:8px;text-align:left}
+.big{font-size:34px;font-weight:800;line-height:1}
+.big small{font-size:16px}
+.top .lab{font-size:12px;color:var(--sub);margin-top:6px}
+.ring{width:96px;height:96px;margin:0 auto;position:relative}
+.ring svg{transform:rotate(-90deg)}
+.ring .in{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .in b{font-size:16px}
+.ring .in i{font-style:normal;font-size:11px;color:var(--sub)}
+.sec{border-top:1px solid var(--line);padding:14px 0}
+.sec-h{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-weight:700}
+.tag{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--soft);color:var(--sub);font-weight:500}
+.cnt{font-weight:800}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:5px 10px;font-size:12.5px;display:inline-flex;gap:5px;align-items:center;background:var(--card)}
+.chip .ic{font-weight:700}
+.chip.pass .ic{color:var(--pass)}
+.chip.hold{border-style:dashed;border-color:var(--stable)} .chip.hold .ic{color:var(--stable)}
+.chip.fail{color:var(--sub);border-style:dashed} .chip.fail .ic{color:var(--low)}
+.chip.unknown{color:var(--sub)} .chip.unknown .ic{color:var(--sub)}
+.chip.soon{border-color:var(--low)}
+.chip .ev{font-size:10.5px;color:var(--sub);background:var(--soft);border-radius:4px;padding:0 5px}
+.chip .ev.ok{color:var(--pass);background:var(--pass-bg)}
+.chip button{border:1px solid var(--stable);background:var(--stable-bg);color:var(--stable);border-radius:999px;font-size:11px;padding:0 7px;cursor:pointer}
+.why{font-size:11.5px;color:var(--sub);margin-top:8px;line-height:1.6}
+.note{font-size:12.5px;color:var(--sub);margin-top:4px;line-height:1.7}
+.note b{color:var(--ink)}
+.acts{display:flex;gap:8px;margin-top:14px}
+.acts button{border-radius:12px;padding:12px;cursor:pointer;border:1px solid var(--line);background:var(--card)}
+.acts .go{flex:1;background:var(--brand);border-color:var(--brand);color:var(--card);font-weight:700}
+.acts .go:disabled{opacity:.35;cursor:not-allowed}
+.disc{font-size:11px;color:var(--sub);margin-top:10px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="card list">
+    <h2>공고 분석</h2>
+    <div class="input"><input placeholder="공고 URL 또는 내용 붙여넣기" aria-label="공고 입력"><button id="run">분석</button></div>
+    <div class="demo">예시: <button id="demoNonIt">비IT 공고 넣어보기</button></div>
+    <div class="toast" id="toast"></div>
+    <div class="filters" id="filters"></div>
+    <div id="items"></div>
+  </section>
+  <section class="card post" id="post"></section>
+  <aside class="card fit" id="fit"></aside>
+</div>
+<script>
+/* 샘플 데이터. 회사와 공고는 가상이다.
+   cond: 지원 자격 조건 [kind, label, result(pass|hold|fail), detail]
+   req/pref: [요건, 상태(m|p|x), 근거 프로젝트, {soft, learn}]
+   prefs: 선호 조건 [label, result(match|miss|unknown), detail] */
+const P=[
+ {id:"a",co:"샘플랩스",ti:"AX 프로덕트 엔지니어",loc:"성남 판교",type:"정규직",exp:"신입/경력",edu:"학사 이상",eduTier:1,dday:12,
+  cond:[["마감","D-12","pass",""],["경력","신입/경력","pass",""],["학력","학사 이상","pass",""],["근무지","성남 판교","pass",""],["고용형태","정규직","pass",""]],
+  req:[["LLM 에이전트 설계","m","oh_my_agents"],["Python","m","oh_my_agents"],["업무 자동화 구축","m","Officer"],["MCP, 외부 도구 연동","m","Officer"],["SQL","x"]],
+  pref:[["LangGraph","x",null,{learn:1}],["Playwright 테스트","m","oh_my_agents"]],
+  prefs:[["연봉 3,500만원 이상","match","3,800~4,500만원"],["사수 있음","match",""],["Series A","match",""]],
+  gap:"필수 중 <b>SQL</b>만 근거 프로젝트가 없습니다. 우대의 <b>LangGraph</b>는 짧게 보완 가능해요."},
+ {id:"b",co:"데모커머스",ti:"AI 업무자동화 담당자",loc:"서울 강남구",type:"정규직",exp:"경력 무관",edu:"학력 무관",eduTier:2,dday:null,rolling:true,rejudge:true,
+  applied:{title:"데이터 분석가",when:"2026.09",status:"서류 탈락"},
+  cond:[["마감","채용시 마감","pass","언제든 닫힐 수 있음"],["경력","경력 무관","pass",""],["학력","학력 무관","pass",""],["근무지","서울 강남구","pass",""],["고용형태","정규직","pass",""]],
+  req:[["n8n 등 노코드 자동화","x",null,{learn:1}],["프롬프트 엔지니어링","m","Officer"],["Google Workspace 연동","m","Officer"],["현업 요구사항 정리","m","oh_my_agents"],["원활한 커뮤니케이션","x",null,{soft:1}]],
+  pref:[["이커머스 도메인","x"]],
+  prefs:[["연봉 3,500만원 이상","unknown","회사 내규"],["사수 있음","unknown","공고에 언급 없음"],["중견/중소","match",""]],
+  gap:"<b>n8n</b>이 필수인데 근거가 없습니다. n8n 미니 프로젝트를 마치면 합격권으로 올라갈 수 있어요."},
+ {id:"c",co:"예시테크",ti:"AI 서비스 개발자",loc:"경기 과천",type:"정규직",exp:"신입",edu:"학사 이상",eduTier:1,dday:9,
+  cond:[["마감","D-9","pass",""],["경력","신입","pass",""],["학력","학사 이상","pass",""],["근무지","경기 과천","pass",""],["고용형태","정규직","pass",""],
+        ["자격증","정보처리기사","hold","취득 예정. 합격 발표일을 입력하면 마감일과 자동 비교"],
+        ["어학","영어 TOEIC 800 (또는 이에 준하는 능력)","hold","성적 없이 지원 가능한지 확인"]],
+  req:[["Python","m","oh_my_agents"],["LLM API 활용","m","Officer"],["클라우드 배포","m","Officer"],["RAG","p","야!"],["Docker","x"]],
+  pref:[["AWS","m","Lovv"]],
+  prefs:[["연봉 3,500만원 이상","match","4,000만원~"],["사수 있음","miss",""],["상장/대기업","match",""]],
+  gap:"요건은 대부분 맞습니다."},
+ {id:"e",co:"가상데이터",ti:"데이터 분석가",loc:"서울 마포구",type:"채용전환형 인턴",exp:"신입",edu:"학사 이상",eduTier:1,dday:2,
+  cond:[["마감","D-2","pass","마감 임박"],["경력","신입","pass",""],["학력","학사 이상","pass",""],["졸업","졸업 후 2년 이내","pass",""],["병역","군필 또는 면제","pass",""],["근무지","서울 마포구","pass",""],["고용형태","채용전환형 인턴","pass",""]],
+  req:[["SQL","x"],["Python","m","oh_my_agents"],["BI 도구 (Tableau 등)","x"],["A/B 테스트 설계","x"]],
+  pref:[["통계학 전공","x"]],
+  prefs:[["연봉 3,500만원 이상","miss","인턴 월 250만원"],["사수 있음","match",""]],
+  gap:"필수 4개 중 <b>Python</b>만 근거가 있습니다. 데이터 분석 직무는 SQL 근거 프로젝트가 먼저 필요해요."},
+ {id:"d",co:"모의솔루션",ti:"AI 엔지니어",loc:"경기 수원시",type:"정규직",exp:"경력 3년 이상",edu:"석사 이상",eduTier:4,dday:-3,
+  cond:[["마감","10/24 마감","fail","마감된 공고"],["경력","경력 3년 이상","fail","내 경력 0년"],["학력","석사 이상","fail","내 학력 학사"],["근무지","경기 수원시","fail","희망 지역(서울, 과천, 성남, 안양) 밖"],["고용형태","정규직","pass",""]],
+  req:[],pref:[],prefs:[],gap:"자격 조건을 충족하지 못해 요건 매칭을 하지 않았습니다. (LLM 호출 없음)"}
+];
+const BANDS={"합격권":"var(--pass)","안정권":"var(--stable)","불합격권":"var(--low)","지원 불가":"var(--block)"};
+const BAND_ORDER={"합격권":1,"안정권":2,"불합격권":3,"지원 불가":4};
+const overrides={};            // 공고id → Set(조건 id)
+let filter="전체", cur=0;
+
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const condId=c=>c[0]+":"+c[1];
+const ov=p=>overrides[p.id]||(overrides[p.id]=new Set());
+
+/* filters.py와 같은 규칙 */
+function effective(p){return p.cond.map(c=>c[2]==="hold"&&ov(p).has(condId(c))?[c[0],c[1],"pass","직접 확인함",true]:c)}
+function coverage(p){
+  const s=p.req.filter(r=>!(r[3]&&r[3].soft));
+  if(!s.length) return null;
+  return s.reduce((a,r)=>a+(r[1]==="m"?1:r[1]==="p"?.5:0),0)/s.length;
+}
+function band(p){
+  const c=effective(p);
+  if(c.some(x=>x[2]==="fail")) return "지원 불가";
+  if(c.some(x=>x[2]==="hold")) return "불합격권";
+  const cov=coverage(p);
+  if(cov===null) return "안정권";
+  if(cov<=.5) return "불합격권";
+  if(cov>=.8&&p.eduTier<=2) return "합격권";
+  return "안정권";
+}
+const bandCls=b=>"b-"+b.replace(/ /g,"");
+
+function condChips(p){
+  return effective(p).map(([k,l,r,d,overridden])=>{
+    const ic=r==="pass"?"✓":r==="fail"?"✕":"△";
+    const soon=k==="마감"&&d==="마감 임박";
+    const btn=r==="hold"?`<button data-ov="${esc(condId([k,l]))}" title="확인했다면 인정으로 바꿔 다시 판정">인정</button>`:"";
+    const ev=overridden?`<span class="ev ok">인정됨</span>`:soon?`<span class="ev" style="color:var(--low)">마감 임박</span>`:"";
+    return `<span class="chip ${r} ${soon?"soon":""}" title="${esc(d)}"><span class="ic">${ic}</span>${esc(l)}${ev}${btn}</span>`;
+  }).join("");
+}
+function reqChips(arr){
+  return arr.map(([l,st,ev,o={}])=>{
+    const r=o.soft?"unknown":st==="m"?"pass":st==="p"?"hold":"fail";
+    const ic=o.soft?"–":st==="m"?"✓":st==="p"?"◐":"✕";
+    const tags=(ev?`<span class="ev">${esc(ev)}</span>`:"")+(o.learn?`<span class="ev">보완 가능</span>`:"")+(o.soft?`<span class="ev">충족률 제외</span>`:"");
+    return `<span class="chip ${r}"><span class="ic">${ic}</span>${esc(l)}${tags}</span>`;
+  }).join("");
+}
+function prefChips(arr){
+  return arr.map(([l,r,d])=>{
+    const ic=r==="match"?"✓":r==="miss"?"✕":"?";
+    const cls=r==="match"?"pass":r==="miss"?"fail":"unknown";
+    return `<span class="chip ${cls}" title="${esc(d)}"><span class="ic">${ic}</span>${esc(l)}${d&&r!=="unknown"?`<span class="ev">${esc(d)}</span>`:""}</span>`;
+  }).join("");
+}
+const cnt=(arr,ok)=>`${arr.filter(ok).length}/${arr.length}`;
+
+function render(){
+  document.getElementById("filters").innerHTML=["전체",...Object.keys(BANDS)].map(b=>`<button class="${b===filter?"on":""}" data-b="${b}">${b}</button>`).join("");
+  const rows=P.map((p,i)=>({p,i,b:band(p)}))
+    .sort((x,y)=>BAND_ORDER[x.b]-BAND_ORDER[y.b]||x.p.eduTier-y.p.eduTier||(coverage(y.p)??0)-(coverage(x.p)??0))
+    .filter(r=>filter==="전체"||r.b===filter);
+  document.getElementById("items").innerHTML=rows.map(({p,i,b})=>{
+    const cov=coverage(p);
+    const dd=p.dday==null?(p.rolling?`<span class="mini">채용시 마감</span>`:""):p.dday<0?`<span class="mini">마감</span>`:`<span class="mini ${p.dday<=3?"warn":""}">D-${p.dday}</span>`;
+    return `<div class="item ${i===cur?"on":""}" data-i="${i}">
+      <div class="co">${esc(p.co)} · ${esc(p.loc)}</div><div class="ti">${esc(p.ti)}</div>
+      <div class="badges"><span class="band ${bandCls(b)}">${b}</span>${dd}
+      ${cov!==null&&b!=="지원 불가"?`<span class="mini">필수 ${Math.round(cov*100)}%</span>`:""}
+      ${p.rejudge?`<span class="mini re">재판정 필요</span>`:""}</div></div>`;
+  }).join("")||`<div class="demo">이 라벨의 공고가 없어요.</div>`;
+
+  const p=P[cur], b=band(p), col=BANDS[b], cov=coverage(p);
+  const eff=effective(p), passN=eff.filter(c=>c[2]==="pass").length, pct=Math.round(passN/eff.length*100);
+  const holds=eff.filter(c=>c[2]==="hold").length;
+  const soft=p.req.filter(r=>r[3]&&r[3].soft).map(r=>r[0]);
+
+  document.getElementById("post").innerHTML=`<div class="co">${esc(p.co)}</div><h1>${esc(p.ti)}</h1>
+    <div class="kv"><span>근무지</span><span>${esc(p.loc)}</span><span>경력</span><span>${esc(p.exp)}</span><span>학력</span><span>${esc(p.edu)}</span><span>고용형태</span><span>${esc(p.type)}</span></div>
+    <div class="raw">공고 원문이 여기에 표시됩니다.
+이미지 공고는 추출한 텍스트와 원본 이미지를 함께 보여줍니다.</div>`;
+
+  const C=2*Math.PI*42;
+  const gapNote=holds?`${p.gap} 보류 조건 <b>${holds}개</b>를 확인하고 <b>인정</b>을 누르면 다시 판정돼요.`:p.gap;
+  document.getElementById("fit").innerHTML=`<h2>FIT 진단</h2>
+    ${p.rejudge?`<div class="banner re">역량이 바뀌어 <b>재판정이 필요</b>해요. 지금 라벨은 예전 역량 기준입니다.</div>`:""}
+    ${p.applied?`<div class="banner">같은 회사에 지원한 기록이 있어요. <b>${esc(p.applied.title)}</b> (${esc(p.applied.when)}, ${esc(p.applied.status)})</div>`:""}
+    <div class="tops">
+      <div class="top"><div class="cap">지원 자격 조건</div><div class="big" style="color:${col}">${pct}<small>%</small></div><div class="lab">${eff.length}개 중 ${passN}개 충족</div></div>
+      <div class="top"><div class="cap">요건 적합도</div><div class="ring">
+        <svg width="96" height="96" aria-hidden="true"><circle cx="48" cy="48" r="42" fill="none" stroke="var(--line)" stroke-width="8"/>
+        <circle cx="48" cy="48" r="42" fill="none" stroke="${col}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C*(cov??0)} ${C}"/></svg>
+        <div class="in"><b style="color:${col}">${b}</b><i>${cov===null?"요건 매칭 안 함":"필수 "+Math.round(cov*100)+"%"}</i></div></div></div>
+    </div>
+    <div class="sec"><div class="sec-h">지원 자격 <span class="tag">필수</span><span class="cnt" style="color:${col}">${passN}/${eff.length}</span></div><div class="chips">${condChips(p)}</div></div>
+    ${p.req.length?`<div class="sec"><div class="sec-h">자격 요건 <span class="tag">필수</span><span class="cnt">${cnt(p.req.filter(r=>!(r[3]&&r[3].soft)),r=>r[1]==="m")}</span></div><div class="chips">${reqChips(p.req)}</div>
+      ${soft.length?`<div class="why">커뮤니케이션처럼 프로젝트로 증명하기 어려운 요건은 충족률에서 뺐어요.</div>`:""}</div>`:""}
+    ${p.pref.length?`<div class="sec"><div class="sec-h">우대 사항 <span class="tag">선호</span><span class="cnt">${cnt(p.pref,r=>r[1]==="m")}</span></div><div class="chips">${reqChips(p.pref)}</div></div>`:""}
+    ${p.prefs.length?`<div class="sec"><div class="sec-h">내 선호 조건 <span class="tag">라벨에 반영 안 함</span><span class="cnt">${p.prefs.filter(x=>x[1]==="match").length}/${p.prefs.filter(x=>x[1]!=="unknown").length}</span></div><div class="chips">${prefChips(p.prefs)}</div>
+      ${p.prefs.some(x=>x[1]==="unknown")?`<div class="why">? 표시는 공고에 정보가 없는 항목이에요. 감점하지 않습니다.</div>`:""}</div>`:""}
+    <div class="note">${gapNote}</div>
+    <div class="acts"><button>보류</button><button>미지원</button><button class="go" ${b==="지원 불가"?"disabled":""}>지원 결정</button></div>
+    <div class="disc">라벨은 합격 확률이 아니라 공고 요건과의 적합도입니다. 요건 칩 옆 태그는 근거 프로젝트예요.</div>`;
+}
+
+function toast(html){const t=document.getElementById("toast");t.innerHTML=html;t.classList.add("on")}
+document.addEventListener("click",e=>{
+  const o=e.target.closest("[data-ov]");
+  if(o){const s=ov(P[cur]);s.add(o.dataset.ov);render();return}
+  const b=e.target.closest("[data-b]"); if(b){filter=b.dataset.b;render();return}
+  const it=e.target.closest("[data-i]"); if(it){cur=+it.dataset.i;render();return}
+  if(e.target.id==="demoNonIt"){toast("<b>IT 직무 공고만 분석할 수 있어요.</b><br>이 공고는 담당업무 기준으로 <b>마케팅</b>(퍼포먼스 마케터)으로 분류됐어요. 분석하지 않았고 목록에도 저장하지 않았어요.");return}
+  if(e.target.id==="run"){toast("목업에서는 분석이 실행되지 않아요. 실제 화면에서는 이 자리에 진행 단계가 표시됩니다.")}
+});
+render();
+</script>
+</body>
+</html>

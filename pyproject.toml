@@ -1,0 +1,19 @@
+[project]
+name = "fitcheck"
+version = "0.1.0"
+description = "IT 직무 채용공고 적합도 진단과 지원 관리 에이전트"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.6",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.setuptools]
+packages = ["fitcheck"]
