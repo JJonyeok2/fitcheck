@@ -7,6 +7,9 @@
 
 ## 1. 한 장 요약
 
+> 각 설계를 왜 이렇게 했는지는 [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md) (D1 ~ D14)
+
+
 - 그래프는 **4개 구간**으로 나뉜다: 수집(Ingest) → 관문(Gate) → 진단(Assess) → 결정(Decide)
 - LLM을 부르는 노드는 **6개**뿐이다: `vision_extract`, `parse_posting`, `match_requirements`, `summarize_gap`, `draft_resume`, (별도 그래프) `extract_skills`
 - 판정(지원 가능 여부, 충족률, 라벨)은 **전부 코드 노드**다
