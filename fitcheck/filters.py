@@ -274,8 +274,8 @@ def education_tier(posting: JobPosting, me: UserConstraints) -> EducationTier:
     return EducationTier.OPEN               # 무관, 고졸, 전문학사 이상
 
 
-PASS_COVERAGE = 0.8     # 합격권 최소 필수요건 충족률 (이상)
-STABLE_COVERAGE = 0.5   # 안정권 최소 필수요건 충족률 (초과). 이하이면 불합격권
+PASS_COVERAGE = 0.8     # 합격권 최소 적합도 점수 (이상)
+STABLE_COVERAGE = 0.5   # 안정권 최소 적합도 점수 (초과). 이하이면 불합격권
 
 
 def fit_band(
@@ -285,7 +285,7 @@ def fit_band(
         return FitBand.BLOCKED
     if eligibility.status == "ambiguous":
         return FitBand.LOW
-    coverage = gap.required_coverage if gap else None
+    coverage = gap.fit_score if gap else None
     if coverage is None:
         return FitBand.STABLE   # 계산할 요건이 없어 검증 불가 → 안정권까지만
     if coverage <= STABLE_COVERAGE:
@@ -296,6 +296,6 @@ def fit_band(
 
 
 def sort_key(band: FitBand, tier: EducationTier, gap: GapReport | None) -> tuple[int, int, float]:
-    """라벨 → 학력 우선순위(학사 기준 공고 먼저) → 필수요건 충족률 순."""
-    coverage = gap.required_coverage if gap and gap.required_coverage is not None else 0.0
+    """라벨 → 학력 우선순위(학사 기준 공고 먼저) → 적합도 점수 순."""
+    coverage = gap.fit_score if gap and gap.fit_score is not None else 0.0
     return (BAND_ORDER[band], tier.value, -coverage)

@@ -115,6 +115,7 @@ class Requirement(BaseModel):
     text: str = Field(..., description="공고 원문 표현 그대로")
     category: Literal["skill", "domain", "certificate", "language", "soft", "etc"]
     keywords: list[str] = Field(default_factory=list, description="매칭용 정규화 키워드. 예: ['LangGraph', 'Agent']")
+    core: bool = Field(False, description="공고 제목이나 기술 스택에도 나오는 핵심 요건. 가중치 1.5배")
 
 
 class CriticalField(str, Enum):
@@ -315,18 +316,40 @@ class CompetencyDB(BaseModel):
 # 4. 매칭 / 갭 리포트
 # ──────────────────────────────────────────────
 
+MatchStrength = Literal["직접 구현", "팀에서 담당", "사용 경험", "조금 만져봄", "없음"]
+
+
 class RequirementMatch(BaseModel):
     requirement: Requirement
     is_required: bool
     status: Literal["matched", "partial", "missing"]
+    strength: Optional[MatchStrength] = Field(
+        None, description="충족 정도 5단계. 없으면 status로 대신 계산 (matched 1.0, partial 0.5, missing 0)"
+    )
     evidence_project_ids: list[str] = Field(default_factory=list, description="matched/partial이면 반드시 1개 이상")
     note: str = ""
     learnable_short_term: bool = Field(False, description="missing이지만 짧게 보완 가능한 것")
 
 
+class ScoreItem(BaseModel):
+    """적합도 점수의 구성 요소 한 줄. 화면의 '점수 내역'에 그대로 보여준다."""
+    text: str
+    is_required: bool
+    weight: float
+    credit: float = Field(..., ge=0, le=1)
+    strength: str
+    evidence_project_ids: list[str] = Field(default_factory=list)
+
+
 class GapReport(BaseModel):
+    fit_score: Optional[float] = Field(
+        None, ge=0, le=1, description="가중 적합도 점수. 라벨 판정과 정렬에 쓴다. 화면에는 정수 %로"
+    )
+    breakdown: list[ScoreItem] = Field(default_factory=list)
+    required_met: tuple[int, int] = Field((0, 0), description="(충족, 전체) 필수요건 개수. 점수 옆에 항상 표시")
+    preferred_met: tuple[int, int] = (0, 0)
     required_coverage: Optional[float] = Field(
-        None, ge=0, le=1, description="라벨 판정에 쓰는 충족률. 계산할 요건이 없으면 None"
+        None, ge=0, le=1, description="필수요건 단순 충족률 (참고용)"
     )
     coverage_basis: Literal["required", "preferred", "responsibilities", "none"] = "required"
     preferred_coverage: Optional[float] = Field(None, ge=0, le=1)

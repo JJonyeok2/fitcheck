@@ -72,15 +72,46 @@ def test_override():
     r2 = check_eligibility(p, ME, today=TODAY, overrides={hold_id})
     assert r2.status == "eligible" and any(c.overridden for c in r2.checks)
 
-# 충족률
+# 적합도 점수
+from fitcheck.scoring import percent
+
+
+def W(text, strength, required=True, core=False, ev=("p1",), cat="skill"):
+    st = {"직접 구현": "matched", "팀에서 담당": "matched", "사용 경험": "matched", "조금 만져봄": "partial", "없음": "missing"}[strength]
+    return RequirementMatch(requirement=Requirement(text=text, category=cat, core=core), is_required=required,
+                            status=st, strength=strength, evidence_project_ids=list(ev) if strength != "없음" else [])
+
+
 def test_soft_excluded():
-    g = build_gap_report([M("Python", "matched"), M("커뮤니케이션", "missing", "soft")], [])
-    assert g.required_coverage == 1.0 and g.soft_requirements == ["커뮤니케이션"]
-def test_partial_half():
-    assert build_gap_report([M("RAG", "partial"), M("Python", "matched")], []).required_coverage == 0.75
+    g = build_gap_report([W("Python", "직접 구현"), W("커뮤니케이션", "없음", cat="soft")], [])
+    assert g.fit_score == 1.0 and g.soft_requirements == ["커뮤니케이션"] and len(g.breakdown) == 1
+def test_status_fallback_without_strength():
+    g = build_gap_report([M("RAG", "partial"), M("Python", "matched")], [])
+    assert g.fit_score == 0.75
+def test_weighted_score_one_percent_steps():
+    req = [W("Python", "직접 구현"), W("LLM API", "사용 경험"), W("RAG", "조금 만져봄", core=True), W("SQL", "팀에서 담당")]
+    pref = [W("AWS", "직접 구현", required=False), W("Docker", "없음", required=False)]
+    g = build_gap_report(req, pref)
+    # (3*1 + 3*.6 + 4.5*.3 + 3*.85 + 1*1 + 1*0) / (3+3+4.5+3+1+1) = 9.7/15.5
+    assert g.fit_score == round(9.7 / 15.5, 4) and percent(g.fit_score) == "63%"
+    assert g.required_met == (3, 4) and g.preferred_met == (1, 2)
+def test_multi_evidence_bonus_capped():
+    g = build_gap_report([W("Python", "사용 경험", ev=("a", "b"))], [])
+    assert g.fit_score == 0.7
+    g = build_gap_report([W("Python", "직접 구현", ev=("a", "b"))], [])
+    assert g.fit_score == 1.0
+def test_core_weighs_more():
+    a = build_gap_report([W("A", "직접 구현", core=True), W("B", "없음")], []).fit_score
+    b = build_gap_report([W("A", "직접 구현"), W("B", "없음", core=True)], []).fit_score
+    assert a > 0.5 > b
 def test_fallback_preferred():
-    g = build_gap_report([], [M("AWS", "matched"), M("Docker", "missing")])
-    assert g.coverage_basis == "preferred" and g.required_coverage == 0.5
+    g = build_gap_report([], [W("AWS", "직접 구현", required=False), W("Docker", "없음", required=False)])
+    assert g.coverage_basis == "preferred" and g.fit_score == 0.5
+def test_band_uses_fit_score():
+    p = P(); e = check_eligibility(p, ME, today=TODAY); tier = education_tier(p, ME)
+    hi = build_gap_report([W("A", "직접 구현"), W("B", "팀에서 담당"), W("C", "사용 경험", required=False)], [])
+    lo = build_gap_report([W("A", "사용 경험"), W("B", "없음")], [])
+    assert fit_band(e, tier, hi) == FitBand.PASS and fit_band(e, tier, lo) == FitBand.LOW
 def test_no_requirements_is_stable():
     p = P(); e = check_eligibility(p, ME, today=TODAY)
     g = build_gap_report([], [])

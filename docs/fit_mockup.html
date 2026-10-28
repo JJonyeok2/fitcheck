@@ -111,6 +111,14 @@ html{color-scheme:light dark}
 .chip.unknown{color:var(--sub)} .chip.unknown .ic{color:var(--sub)}
 .chip.soon{border-color:var(--low)}
 .chip .ev{font-size:10.5px;color:var(--sub);background:var(--soft);border-radius:4px;padding:0 5px}
+.chip .ev.core{color:var(--accent);background:var(--accent-bg)}
+.bd summary{cursor:pointer;font-size:12.5px;color:var(--accent)}
+.bd table{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:8px}
+.bd th,.bd td{text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)}
+.bd th{color:var(--sub);font-weight:500;white-space:nowrap}
+.bd td:not(:first-child){white-space:nowrap}
+.bd td:nth-child(n+4),.bd th:nth-child(n+4){text-align:right;font-variant-numeric:tabular-nums}
+.bd tfoot td{font-weight:700}
 .chip .ev.ok{color:var(--pass);background:var(--pass-bg)}
 .chip button{border:1px solid var(--stable);background:var(--stable-bg);color:var(--stable);border-radius:999px;font-size:11px;padding:0 7px;cursor:pointer}
 .why{font-size:11.5px;color:var(--sub);margin-top:8px;line-height:1.6}
@@ -173,19 +181,19 @@ html{color-scheme:light dark}
 <script>
 /* 샘플 데이터. 회사와 공고는 가상이다.
    cond: 지원 자격 조건 [kind, label, result(pass|hold|fail), detail]
-   req/pref: [요건, 상태(m|p|x), 근거 프로젝트, {soft, learn}]
+   req/pref: [요건, 충족 정도(d 직접 구현|t 팀에서 담당|u 사용 경험|p 조금 만져봄|x 없음), 근거 프로젝트(배열), {core, soft, learn}]
    prefs: 선호 조건 [label, result(match|miss|unknown), detail] */
 const P=[
  {id:"a",co:"샘플랩스",ti:"AX 프로덕트 엔지니어",loc:"성남 판교",type:"정규직",exp:"신입/경력",edu:"학사 이상",eduTier:1,dday:12,
   cond:[["마감","D-12","pass",""],["경력","신입/경력","pass",""],["학력","학사 이상","pass",""],["근무지","성남 판교","pass",""],["고용형태","정규직","pass",""]],
-  req:[["LLM 에이전트 설계","m","oh_my_agents"],["Python","m","oh_my_agents"],["업무 자동화 구축","m","Officer"],["MCP, 외부 도구 연동","m","Officer"],["SQL","x"]],
-  pref:[["LangGraph","x",null,{learn:1}],["Playwright 테스트","m","oh_my_agents"]],
+  req:[["LLM 에이전트 설계","d",["oh_my_agents"],{core:1}],["Python","d",["oh_my_agents","Officer"]],["업무 자동화 구축","d",["Officer"],{core:1}],["MCP, 외부 도구 연동","t",["Officer"]],["Git 협업","d",["Lovv"]],["SQL","x"]],
+  pref:[["LangGraph","x",null,{learn:1}],["Playwright 테스트","d",["oh_my_agents"]]],
   prefs:[["연봉 3,500만원 이상","match","3,800~4,500만원"],["사수 있음","match",""],["Series A","match",""]],
   gap:"필수 중 <b>SQL</b>만 근거 프로젝트가 없습니다. 우대의 <b>LangGraph</b>는 짧게 보완 가능해요."},
  {id:"b",co:"데모커머스",ti:"AI 업무자동화 담당자",loc:"서울 강남구",type:"정규직",exp:"경력 무관",edu:"학력 무관",eduTier:2,dday:null,rolling:true,rejudge:true,
   applied:{title:"데이터 분석가",when:"2026.09",status:"서류 탈락"},
   cond:[["마감","채용시 마감","pass","언제든 닫힐 수 있음"],["경력","경력 무관","pass",""],["학력","학력 무관","pass",""],["근무지","서울 강남구","pass",""],["고용형태","정규직","pass",""]],
-  req:[["n8n 등 노코드 자동화","x",null,{learn:1}],["프롬프트 엔지니어링","m","Officer"],["Google Workspace 연동","m","Officer"],["현업 요구사항 정리","m","oh_my_agents"],["원활한 커뮤니케이션","x",null,{soft:1}]],
+  req:[["n8n 등 노코드 자동화","x",null,{core:1,learn:1}],["프롬프트 엔지니어링","d",["Officer"]],["Google Workspace 연동","u",["Officer"]],["현업 요구사항 정리","t",["Lovv"]],["원활한 커뮤니케이션","x",null,{soft:1}]],
   pref:[["이커머스 도메인","x"]],
   prefs:[["연봉 3,500만원 이상","unknown","회사 내규"],["사수 있음","unknown","공고에 언급 없음"],["중견/중소","match",""]],
   gap:"<b>n8n</b>이 필수인데 근거가 없습니다. n8n 미니 프로젝트를 마치면 합격권으로 올라갈 수 있어요."},
@@ -193,13 +201,13 @@ const P=[
   cond:[["마감","D-9","pass",""],["경력","신입","pass",""],["학력","학사 이상","pass",""],["근무지","경기 과천","pass",""],["고용형태","정규직","pass",""],
         ["자격증","정보처리기사","hold","취득 예정. 합격 발표일을 입력하면 마감일과 자동 비교"],
         ["어학","영어 TOEIC 800 (또는 이에 준하는 능력)","hold","성적 없이 지원 가능한지 확인"]],
-  req:[["Python","m","oh_my_agents"],["LLM API 활용","m","Officer"],["클라우드 배포","m","Officer"],["RAG","p","야!"],["Docker","x"]],
-  pref:[["AWS","m","Lovv"]],
+  req:[["Python","d",["oh_my_agents","Officer"]],["LLM API 활용","d",["Officer"],{core:1}],["클라우드 배포","u",["Officer"]],["RAG","p",["야!"]],["Docker","x"]],
+  pref:[["AWS","t",["Lovv"]]],
   prefs:[["연봉 3,500만원 이상","match","4,000만원~"],["사수 있음","miss",""],["상장/대기업","match",""]],
   gap:"요건은 대부분 맞습니다."},
  {id:"e",co:"가상데이터",ti:"데이터 분석가",loc:"서울 마포구",type:"채용전환형 인턴",exp:"신입",edu:"학사 이상",eduTier:1,dday:2,
   cond:[["마감","D-2","pass","마감 임박"],["경력","신입","pass",""],["학력","학사 이상","pass",""],["졸업","졸업 후 2년 이내","pass",""],["병역","군필 또는 면제","pass",""],["근무지","서울 마포구","pass",""],["고용형태","채용전환형 인턴","pass",""]],
-  req:[["SQL","x"],["Python","m","oh_my_agents"],["BI 도구 (Tableau 등)","x"],["A/B 테스트 설계","x"]],
+  req:[["SQL","x",null,{core:1}],["Python","d",["oh_my_agents"]],["BI 도구 (Tableau 등)","x"],["A/B 테스트 설계","x"]],
   pref:[["통계학 전공","x"]],
   prefs:[["연봉 3,500만원 이상","miss","인턴 월 250만원"],["사수 있음","match",""]],
   gap:"필수 4개 중 <b>Python</b>만 근거가 있습니다. 데이터 분석 직무는 SQL 근거 프로젝트가 먼저 필요해요."},
@@ -218,11 +226,20 @@ const ov=p=>overrides[p.id]||(overrides[p.id]=new Set());
 
 /* filters.py와 같은 규칙 */
 function effective(p){return p.cond.map(c=>c[2]==="hold"&&ov(p).has(condId(c))?[c[0],c[1],"pass","직접 확인함",true]:c)}
-function coverage(p){
-  const s=p.req.filter(r=>!(r[3]&&r[3].soft));
-  if(!s.length) return null;
-  return s.reduce((a,r)=>a+(r[1]==="m"?1:r[1]==="p"?.5:0),0)/s.length;
+/* scoring.py와 같은 계산: 적합도 = Σ(가중치 × 충족 정도) / Σ(가중치) */
+const CREDIT={d:1,t:.85,u:.6,p:.3,x:0}, STRENGTH={d:"직접 구현",t:"팀에서 담당",u:"사용 경험",p:"조금 만져봄",x:"없음"};
+function items(p){
+  const one=(r,required)=>{const o=r[3]||{};if(o.soft)return null;
+    let c=CREDIT[r[1]]; if(c>0&&r[2]&&new Set(r[2]).size>=2)c=Math.min(1,c+.1);
+    return {text:r[0],required,w:(required?3:1)*(o.core?1.5:1),c,code:r[1]}};
+  return [...p.req.map(r=>one(r,true)),...p.pref.map(r=>one(r,false))].filter(Boolean);
 }
+function coverage(p){
+  const it=items(p), tw=it.reduce((a,i)=>a+i.w,0);
+  return tw?it.reduce((a,i)=>a+i.w*i.c,0)/tw:null;
+}
+const toPct=v=>Math.round(v*100);
+function met(p,required){const it=items(p).filter(i=>i.required===required);return [it.filter(i=>i.c>=.6).length,it.length]}
 function band(p){
   const c=effective(p);
   if(c.some(x=>x[2]==="fail")) return "지원 불가";
@@ -246,11 +263,21 @@ function condChips(p){
 }
 function reqChips(arr){
   return arr.map(([l,st,ev,o={}])=>{
-    const r=o.soft?"unknown":st==="m"?"pass":st==="p"?"hold":"fail";
-    const ic=o.soft?"–":st==="m"?"✓":st==="p"?"◐":"✕";
-    const tags=(ev?`<span class="ev">${esc(ev)}</span>`:"")+(o.learn?`<span class="ev">보완 가능</span>`:"")+(o.soft?`<span class="ev">충족률 제외</span>`:"");
+    const r=o.soft?"unknown":CREDIT[st]>=.6?"pass":st==="p"?"hold":"fail";
+    const ic=o.soft?"–":CREDIT[st]>=.6?"✓":st==="p"?"◐":"✕";
+    const tags=(o.core?`<span class="ev core">핵심</span>`:"")
+      +(st!=="x"&&!o.soft?`<span class="ev">${STRENGTH[st]}</span>`:"")
+      +(ev?ev.map(e=>`<span class="ev">${esc(e)}</span>`).join(""):"")
+      +(o.learn?`<span class="ev">보완 가능</span>`:"")+(o.soft?`<span class="ev">점수 제외</span>`:"");
     return `<span class="chip ${r}"><span class="ic">${ic}</span>${esc(l)}${tags}</span>`;
   }).join("");
+}
+function breakdown(p){
+  const it=items(p), tw=it.reduce((a,i)=>a+i.w,0), got=it.reduce((a,i)=>a+i.w*i.c,0);
+  const rows=it.map(i=>`<tr><td>${esc(i.text)}</td><td>${i.required?"필수":"우대"}</td><td>${STRENGTH[i.code]}</td><td>${i.w.toFixed(1)}</td><td>${i.c.toFixed(2)}</td><td>${(i.w*i.c).toFixed(2)}</td></tr>`).join("");
+  return `<details class="bd"><summary>점수 내역 보기</summary><table><thead><tr><th>요건</th><th>구분</th><th>충족</th><th>가중치</th><th>점수</th><th>반영</th></tr></thead><tbody>${rows}</tbody>
+    <tfoot><tr><td colspan="3">합계</td><td>${tw.toFixed(1)}</td><td></td><td>${got.toFixed(2)}</td></tr></tfoot></table>
+    <div class="why">${got.toFixed(2)} ÷ ${tw.toFixed(1)} = <b>${toPct(got/tw)}%</b>. 가중치: 필수 3, 우대 1, 핵심 요건 1.5배. 충족: 직접 구현 1.0, 팀에서 담당 0.85, 사용 경험 0.6, 조금 만져봄 0.3. 근거 프로젝트 2개 이상이면 +0.1.</div></details>`;
 }
 function prefChips(arr){
   return arr.map(([l,r,d])=>{
@@ -272,7 +299,7 @@ function render(){
     return `<div class="item ${i===cur?"on":""}" data-i="${i}">
       <div class="co">${esc(p.co)} · ${esc(p.loc)}</div><div class="ti">${esc(p.ti)}</div>
       <div class="badges"><span class="band ${bandCls(b)}">${b}</span>${dd}
-      ${cov!==null&&b!=="지원 불가"?`<span class="mini">필수 ${Math.round(cov*100)}%</span>`:""}
+      ${cov!==null&&b!=="지원 불가"?`<span class="mini">적합도 ${toPct(cov)}%</span>`:""}
       ${p.rejudge?`<span class="mini re">재판정 필요</span>`:""}</div></div>`;
   }).join("")||`<div class="demo">이 라벨의 공고가 없어요.</div>`;
 
@@ -296,12 +323,14 @@ function render(){
       <div class="top"><div class="cap">요건 적합도</div><div class="ring">
         <svg width="96" height="96" aria-hidden="true"><circle cx="48" cy="48" r="42" fill="none" stroke="var(--line)" stroke-width="8"/>
         <circle cx="48" cy="48" r="42" fill="none" stroke="${col}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${C*(cov??0)} ${C}"/></svg>
-        <div class="in"><b style="color:${col}">${b}</b><i>${cov===null?"요건 매칭 안 함":"필수 "+Math.round(cov*100)+"%"}</i></div></div></div>
+        <div class="in"><b style="color:${col}">${b}</b><i>${cov===null?"요건 매칭 안 함":"적합도 "+toPct(cov)+"%"}</i></div></div>
+        ${cov===null?"":`<div class="lab">필수 ${met(p,true).join("/")} · 우대 ${met(p,false).join("/")} 충족</div>`}</div>
     </div>
     <div class="sec"><div class="sec-h">지원 자격 <span class="tag">필수</span><span class="cnt" style="color:${col}">${passN}/${eff.length}</span></div><div class="chips">${condChips(p)}</div></div>
-    ${p.req.length?`<div class="sec"><div class="sec-h">자격 요건 <span class="tag">필수</span><span class="cnt">${cnt(p.req.filter(r=>!(r[3]&&r[3].soft)),r=>r[1]==="m")}</span></div><div class="chips">${reqChips(p.req)}</div>
-      ${soft.length?`<div class="why">커뮤니케이션처럼 프로젝트로 증명하기 어려운 요건은 충족률에서 뺐어요.</div>`:""}</div>`:""}
-    ${p.pref.length?`<div class="sec"><div class="sec-h">우대 사항 <span class="tag">선호</span><span class="cnt">${cnt(p.pref,r=>r[1]==="m")}</span></div><div class="chips">${reqChips(p.pref)}</div></div>`:""}
+    ${p.req.length?`<div class="sec"><div class="sec-h">자격 요건 <span class="tag">필수</span><span class="cnt">${met(p,true).join("/")}</span></div><div class="chips">${reqChips(p.req)}</div>
+      ${soft.length?`<div class="why">커뮤니케이션처럼 프로젝트로 증명하기 어려운 요건은 점수에서 뺐어요.</div>`:""}</div>`:""}
+    ${p.pref.length?`<div class="sec"><div class="sec-h">우대 사항 <span class="tag">선호</span><span class="cnt">${met(p,false).join("/")}</span></div><div class="chips">${reqChips(p.pref)}</div></div>`:""}
+    ${cov!==null?`<div class="sec" style="padding-top:0;border-top:0">${breakdown(p)}</div>`:""}
     ${p.prefs.length?`<div class="sec"><div class="sec-h">내 선호 조건 <span class="tag">라벨에 반영 안 함</span><span class="cnt">${p.prefs.filter(x=>x[1]==="match").length}/${p.prefs.filter(x=>x[1]!=="unknown").length}</span></div><div class="chips">${prefChips(p.prefs)}</div>
       ${p.prefs.some(x=>x[1]==="unknown")?`<div class="why">? 표시는 공고에 정보가 없는 항목이에요. 감점하지 않습니다.</div>`:""}</div>`:""}
     <div class="note">${gapNote}</div>

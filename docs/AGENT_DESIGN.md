@@ -247,12 +247,12 @@ def route_after_decide(s) -> Literal["check_eligibility", "draft_resume", "save_
 |---|---|---|---|---|
 | `vision_extract` | 이미지 조각 1개 | `{text: str, uncertain_lines: list[int]}` | 요약, 재구성 금지. 보이는 글자 그대로 | 조각 수 (최대 8) |
 | `parse_posting` | 정규화 텍스트, 직무 분류 목록 | `JobPosting` | 공고에 없는 값 추측 금지. 직무는 담당업무 기준 | 1 (+재시도 최대 2) |
-| `match_requirements` | 요건 목록 + **후보 프로젝트의 역할, 기여만** | `list[{req_index, status, evidence_ids, note}]` | 후보 밖 프로젝트 언급 금지. 근거 없으면 missing | 1 (요건 전체를 한 번에) |
+| `match_requirements` | 요건 목록 + **후보 프로젝트의 역할, 기여만** | `list[{req_index, strength, evidence_ids, note}]` (strength 5단계) | 후보 밖 프로젝트 언급 금지. 근거 없으면 missing | 1 (요건 전체를 한 번에) |
 | `summarize_gap` | 코드가 계산한 라벨, 충족률, 부족 요건 | `{summary: str}` (2문장 이내) | 넘겨받지 않은 숫자, 라벨 생성 금지 | 1 |
 | `draft_resume` | 공고 요건, matched 요건과 근거 프로젝트 | `list[{project_id, order, emphasis}]` | 역량 DB에 없는 경험 생성 금지 | 1 |
 
 **코드가 LLM 출력을 다시 검사하는 항목**
-- `match_requirements`: `evidence_ids`가 후보 목록에 없으면 해당 판정을 missing으로 강등
+- `match_requirements`: `evidence_ids`가 후보 목록에 없으면 "없음"으로 강등. 팀 프로젝트에서 본인 역할에 없는 기술은 "팀에서 담당"까지, 역량 DB에서 "조금 만져봄"인 기술은 0.3까지로 상한
 - `summarize_gap`: 출력에 나온 숫자가 입력 숫자 집합에 없으면 문장 폐기 후 코드가 만든 기본 문장 사용
 - `draft_resume`: `project_id`가 역량 DB에 없으면 그 항목 제거
 - `parse_posting`: `job_category`가 분류 목록 밖이면 `기타` + 분류 불확실 처리

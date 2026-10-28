@@ -162,7 +162,8 @@ T4, T8, T9 ── T17          T15, T16 ── T18 ── T19
 - `match_requirements` 노드 (Spec 4.6)
   1. 요건 키워드 정규화
   2. `skill_index()`로 후보 프로젝트 선정, 후보 없으면 LLM 없이 missing
-  3. LLM은 요건과 후보 프로젝트의 `my_role`, `contributions`만 보고 판정, 근거 id 필수
+  3. LLM은 요건과 후보 프로젝트의 `my_role`, `contributions`만 보고 **충족 정도 5단계**(Spec 5.2)와 근거 id를 냄
+  3-1. 코드가 상한 적용: 팀 프로젝트에서 본인 역할에 없으면 "팀에서 담당"까지, "조금 만져봄" 기술은 0.3까지
   4. 근거 없는 matched/partial은 코드가 missing으로 강등
 - 필수와 우대가 모두 없으면 담당업무를 요건처럼 매칭 (Spec 5.2).
 
@@ -173,7 +174,7 @@ T4, T8, T9 ── T17          T15, T16 ── T18 ── T19
 
 ### T10. 점수, 선호, 보완 포인트 — 파트: 판정
 **지시**
-- `score` 노드: `build_gap_report` → `education_tier` → `fit_band` → `check_preferences`.
+- `score` 노드: `build_gap_report`(가중 적합도) → `education_tier` → `fit_band` → `check_preferences`.
 - `summarize_gap` 노드: 보완 포인트 1~2문장. 숫자와 라벨은 코드가 넘긴 값만 쓰도록 프롬프트에 고정.
 
 **완료 조건**
