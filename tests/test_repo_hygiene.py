@@ -9,6 +9,7 @@ TASKS.md T1의 완료 조건을 그대로 옮겼다.
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import tomllib
@@ -18,6 +19,16 @@ import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
+
+# 하위 프로세스 출력은 OS 기본 인코딩(윈도우 cp949)이 아니라 항상 UTF-8로 읽는다.
+# pre-commit도 UTF-8로 출력하게 한다. 훅 이름에 한글이 있어서, 안 그러면 윈도우에서 출력이 깨진다.
+UTF8_ENV = {**os.environ, "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8"}
+
+
+def run(cmd: list[str], cwd: Path, check: bool = False) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        cmd, cwd=cwd, check=check, capture_output=True, encoding="utf-8", errors="replace", env=UTF8_ENV
+    )
 
 
 # ── 의존성 고정 ─────────────────────────────────────────
@@ -46,7 +57,7 @@ def _ruff(*args: str) -> subprocess.CompletedProcess:
     exe = shutil.which("ruff")
     if exe is None:
         pytest.skip("ruff가 설치되지 않음")
-    return subprocess.run([exe, *args], cwd=ROOT, capture_output=True, text=True)
+    return run([exe, *args], ROOT)
 
 
 def test_ruff_configured():
@@ -114,21 +125,21 @@ def sandbox_repo(tmp_path: Path) -> Path:
         shutil.copy(ROOT / "scripts" / "block_private_files.py", tmp_path / "scripts")
 
     def git(*a: str) -> None:
-        subprocess.run(["git", *a], cwd=tmp_path, check=True, capture_output=True)
+        run(["git", *a], tmp_path, check=True)
 
     git("init", "-q")
     git("config", "user.name", "test")
     git("config", "user.email", "test@example.com")
     git("add", "-A")
     git("commit", "-q", "-m", "init", "--no-verify")
-    subprocess.run(["pre-commit", "install"], cwd=tmp_path, check=True, capture_output=True)
+    run(["pre-commit", "install"], tmp_path, check=True)
     return tmp_path
 
 
 def _try_commit(repo: Path, path: str, content: str, force: bool = False) -> subprocess.CompletedProcess:
-    (repo / path).write_text(content, encoding="utf-8")
-    subprocess.run(["git", "add", *(["-f"] if force else []), path], cwd=repo, check=True, capture_output=True)
-    return subprocess.run(["git", "commit", "-m", "try"], cwd=repo, capture_output=True, text=True)
+    (repo / path).write_text(content, encoding="utf-8", newline="\n")
+    run(["git", "add", *(["-f"] if force else []), path], repo, check=True)
+    return run(["git", "commit", "-m", "try"], repo)
 
 
 FAKE_OPENAI_KEY = "sk-proj-" + "Ab3dE6gH9jK2mN5pQ8sT1vW4yZ7bC0eF3hJ6kL9nP2rS5uX8aD1gI4lO7qR0tV3w"

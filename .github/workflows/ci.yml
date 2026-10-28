@@ -13,8 +13,13 @@ env:
 
 jobs:
   test:
-    name: lint, test
-    runs-on: ubuntu-latest
+    name: lint, test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # 개발은 윈도우에서 한다. 윈도우에서만 깨지는 문제(인코딩, 경로, 줄바꿈)를 잡기 위해 둘 다 돌린다
+        os: [ubuntu-latest, windows-latest]
     env:
       # CI에서는 절대 실제 LLM API를 부르지 않는다. 키도 주입하지 않는다.
       FIT_LLM: fake
@@ -29,10 +34,25 @@ jobs:
       - name: 의존성 설치 (uv.lock 그대로)
         run: uv sync --locked --group dev
 
-      - name: gitleaks 설치 (커밋 차단 테스트용)
+      - name: gitleaks 설치 (커밋 차단 테스트용, Linux)
+        if: runner.os == 'Linux'
         run: |
           curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar xz gitleaks
           sudo mv gitleaks /usr/local/bin/
+
+      - name: gitleaks 설치 (커밋 차단 테스트용, Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $dir = "$env:RUNNER_TEMP\gitleaks"
+          Invoke-WebRequest "https://github.com/gitleaks/gitleaks/releases/download/v$env:GITLEAKS_VERSION/gitleaks_$($env:GITLEAKS_VERSION)_windows_x64.zip" -OutFile "$dir.zip"
+          Expand-Archive "$dir.zip" -DestinationPath $dir
+          Add-Content $env:GITHUB_PATH $dir
+
+      - name: git 사용자 (임시 저장소 테스트용)
+        run: |
+          git config --global user.name ci
+          git config --global user.email ci@example.com
 
       - name: ruff check
         run: uv run ruff check .
