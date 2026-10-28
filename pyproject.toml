@@ -5,6 +5,8 @@ description = "IT 직무 채용공고 적합도 진단과 지원 관리 에이�
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "langgraph>=1.2,<2",
+    "langgraph-checkpoint-sqlite>=3.1,<4",
     "openai>=3.40,<4",
     "playwright>=1.63,<2",
     "pydantic>=2.14,<3",
