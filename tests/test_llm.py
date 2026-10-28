@@ -14,6 +14,10 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 import pytest
+from pydantic import BaseModel
+
+from fitcheck.budget import BudgetExceeded, LLMBudget
+from fitcheck.config import load_env
 from fitcheck.llm import (
     BudgetBlocked,
     FakeLLM,
@@ -24,10 +28,6 @@ from fitcheck.llm import (
     get_llm,
     load_pricing,
 )
-from pydantic import BaseModel
-
-from fitcheck.budget import BudgetExceeded, LLMBudget
-from fitcheck.config import load_env
 
 FAKE_KEY = "sk-proj-" + "TESTKEYNOTREAL" * 4
 

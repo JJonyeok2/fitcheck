@@ -68,7 +68,7 @@ T4, T8, T9 ── T17          T15, T16 ── T18 ── T19
 - [x] Actions에서 전체 테스트 통과 (49개)
 - [x] 가짜 키를 넣은 파일, `.env`, `competencies.local.yaml` 커밋이 거부되는 것 확인 (`tests/test_repo_hygiene.py`)
 
-### T2. LLM 클라이언트 — 파트: 파싱, 에이전트
+### T2. LLM 클라이언트 — 파트: 파싱, 에이전트 ✅ 클라이언트 완료 (2026-10-28), 모델 비교 스크립트는 U3 직전에
 **지시**
 - `fitcheck/llm.py`: 공급자에 의존하지 않는 인터페이스.
   - `structured(prompt, schema: type[BaseModel], images=None) -> BaseModel`
@@ -81,9 +81,9 @@ T4, T8, T9 ── T17          T15, T16 ── T18 ── T19
 - `scripts/compare_models.py`: U3용. 이미지 공고 N개를 모델별로 파싱해 정답셋과 비교한 표를 출력.
 
 **완료 조건**
-- [ ] 키가 없으면 실행 즉시 명확한 오류 메시지 (키 값은 로그에 절대 출력 안 함)
-- [ ] 상한 초과 시 `BudgetExceeded`가 나는 테스트
-- [ ] `FakeLLM`으로 구조화 출력 검증 실패 → 재시도 동작 테스트
+- [x] 키가 없으면 실행 즉시 명확한 오류 메시지 (키 값은 로그에 절대 출력 안 함)
+- [x] 상한 초과 시 `BudgetExceeded`가 나는 테스트
+- [x] `FakeLLM`으로 구조화 출력 검증 실패 → 재시도 동작 테스트 (`tests/test_llm.py` 30개)
 
 ### T3. 저장소 (SQLite) — 파트: 저장
 **지시**

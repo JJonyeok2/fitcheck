@@ -25,3 +25,23 @@ def load_profile(path: str | Path | None = None) -> tuple[UserConstraints, UserP
         UserPreferences(**raw.get("preferences", {})),
         CompetencyDB(projects=raw.get("projects", [])),
     )
+
+
+def load_env(path: str | Path | None = None) -> None:
+    """.env 파일을 읽어 환경 변수로 넣는다. 이미 설정된 값은 덮어쓰지 않는다 (CI, 셸에서 준 값이 우선).
+
+    형식: KEY=VALUE, 빈 줄과 #으로 시작하는 줄은 무시, 값의 바깥 따옴표는 벗긴다.
+    """
+    import os
+
+    src = Path(path) if path else ROOT / ".env"
+    if not src.exists():
+        return
+    for raw in src.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = (part.strip() for part in line.split("=", 1))
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+            value = value[1:-1]
+        os.environ.setdefault(key, value)
