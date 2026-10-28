@@ -54,6 +54,7 @@ T4, T8, T9 ── T17          T15, T16 ── T18 ── T19
 
 ### T1. 개발 환경과 CI — 파트: QA
 **지시**
+- `uv`로 의존성 관리 전환, `uv.lock` 커밋. 버전은 Spec 11장 표 기준.
 - `ruff`(lint, format) 설정을 `pyproject.toml`에 추가.
 - GitHub Actions: push, PR마다 `ruff check`, `pytest` 실행.
 - 커밋 전 비밀 값 검사: `pre-commit` + `gitleaks` 훅. `.env`, `competencies.local.yaml`이 스테이징되면 커밋 거부.
@@ -68,7 +69,9 @@ T4, T8, T9 ── T17          T15, T16 ── T18 ── T19
 - `fitcheck/llm.py`: 공급자에 의존하지 않는 인터페이스.
   - `structured(prompt, schema: type[BaseModel], images=None) -> BaseModel`
   - 호출 전 `LLMBudget.spend()` 필수. 응답 시간, 입력과 출력 토큰 수를 기록.
-- 실제 공급자 구현은 1개만 (U3 전이면 임시로 아무거나), 키는 `.env`의 `LLM_API_KEY`에서 읽음.
+- 실제 공급자 구현은 1개만 (발급받은 키의 공급자), 키는 `.env`의 `LLM_API_KEY`에서 읽음. 텍스트용과 이미지용 공급자를 설정으로 따로 지정 가능하게.
+- 호출마다 토큰 수를 기록하고 `pricing.yaml` 단가로 월 누적 비용 계산. 80% 경고, 100% 새 분석 차단 (Spec 11.4).
+- 인증 오류(401)는 "키가 만료됐을 수 있어요"로 안내.
 - `FakeLLM`: 미리 넣어둔 응답을 순서대로 돌려주는 테스트용 구현.
 - `scripts/compare_models.py`: U3용. 이미지 공고 N개를 모델별로 파싱해 정답셋과 비교한 표를 출력.
 

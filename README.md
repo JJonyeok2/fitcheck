@@ -55,4 +55,4 @@ cp competencies.example.yaml competencies.local.yaml
 
 ## 기술 스택
 
-Python, Pydantic, LangGraph (예정), FastAPI (예정), Playwright, Next.js (예정)
+Python 3.12, uv, Pydantic, LangGraph, FastAPI, SQLite, Playwright, Next.js 16, TypeScript (자세한 버전과 고른 이유는 [Spec 11장](docs/SPEC.md))
