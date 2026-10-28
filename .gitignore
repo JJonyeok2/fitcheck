@@ -29,3 +29,4 @@ test-results/
 eval/postings/
 eval/labels.csv
 eval/time_log.csv
+eval/.timer.json

@@ -15,6 +15,7 @@ dependencies = [
 
 [project.scripts]
 fitcheck = "fitcheck.cli:main"
+fitcheck-time = "fitcheck.timelog:main"
 
 [dependency-groups]
 dev = [
