@@ -336,17 +336,24 @@ class Project(BaseModel):
     contributions: list[str] = Field(default_factory=list, description="본인이 직접 한 일")
     results: list[str] = Field(default_factory=list, description="정량 결과 우선")
     skills: list[str] = Field(default_factory=list, description="이 프로젝트에서 본인이 직접 쓴 기술만")
+    touched_skills: list[str] = Field(
+        default_factory=list, description="조금 만져본 기술. 매칭에서 '조금 만져봄'(0.3)까지만 인정"
+    )
 
 
 class CompetencyDB(BaseModel):
     projects: list[Project]
 
     def skill_index(self) -> dict[str, list[str]]:
-        """기술 → 근거 프로젝트 id 목록. 근거 없는 기술은 여기 존재하지 않음."""
+        """기술(정규화된 이름) → 근거 프로젝트 id 목록. 조금 만져본 기술도 포함. 근거 없는 기술은 없다."""
+        from .aliases import canonical
+
         index: dict[str, list[str]] = {}
         for p in self.projects:
-            for s in p.skills:
-                index.setdefault(s.lower(), []).append(p.id)
+            for s in [*p.skills, *p.touched_skills]:
+                ids = index.setdefault(canonical(s), [])
+                if p.id not in ids:
+                    ids.append(p.id)
         return index
 
 

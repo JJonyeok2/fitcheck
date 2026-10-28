@@ -145,8 +145,20 @@ def _cert_required():
 
 
 def test_override_rejudges_and_changes_band(data_dir):
+    from fitcheck.schemas import CompetencyDB, Project
+
     text = TEXT + "- 정보처리기사 필수\n"
-    graph, deps = make(data_dir, [_cert_required()])
+    strong = {
+        "items": [
+            {"req_index": 0, "strength": "직접 구현", "evidence_ids": ["p"]},
+            {"req_index": 1, "strength": "직접 구현", "evidence_ids": ["p"]},
+        ]
+    }
+    # 매칭은 인정 전과 후에 한 번씩 돈다
+    graph, deps = make(data_dir, [_cert_required(), strong, strong])
+    deps.db = CompetencyDB(
+        projects=[Project(id="p", name="P", period="2026", my_role="1인", skills=["Python", "LangGraph"])]
+    )
     pid = start(graph, "t1", text)["posting_id"]
     first = pending_interrupt(graph, "t1")
     assert first["band"] == "불합격권"
@@ -154,7 +166,8 @@ def test_override_rejudges_and_changes_band(data_dir):
 
     resume(graph, "t1", {"decision": "override", "condition_ids": [hold]})
     second = pending_interrupt(graph, "t1")
-    assert second["kind"] == "decide" and second["band"] != "불합격권"
+    assert second["kind"] == "decide" and second["band"] == "합격권"
+    assert next(c for c in second["checks"] if c["id"] == hold)["result"] == "pass"
     assert hold in deps.store.overrides(pid), "인정 기록은 저장소에 남는다"
 
 
@@ -229,7 +242,8 @@ def test_cli_analyze_then_resume(data_dir, tmp_path, monkeypatch, capsys):
     posting_file = tmp_path / "posting.txt"
     posting_file.write_text(TEXT, encoding="utf-8")
     monkeypatch.setenv("FIT_DATA_DIR", str(data_dir))
-    monkeypatch.setattr(cli, "_make_llm", lambda ledger: FakeLLM([extraction()], ledger=ledger))
+    judged = {"items": [{"req_index": 0, "strength": "직접 구현", "evidence_ids": ["sample-chatbot"]}]}
+    monkeypatch.setattr(cli, "_make_llm", lambda ledger: FakeLLM([extraction(), judged], ledger=ledger))
     monkeypatch.setattr(cli, "_today", lambda: TODAY)
 
     assert cli.main(["analyze", "--file", str(posting_file)]) == 0
@@ -239,3 +253,56 @@ def test_cli_analyze_then_resume(data_dir, tmp_path, monkeypatch, capsys):
 
     assert cli.main(["resume", thread, "--decision", "apply"]) == 0
     assert "저장했어요" in capsys.readouterr().out
+
+
+# ── 요건 매칭 연결 (T9) ──────────────────────────────────
+
+
+def test_matching_produces_fit_score_and_pass_band(data_dir):
+    from fitcheck.schemas import CompetencyDB, Project
+
+    db = CompetencyDB(
+        projects=[
+            Project(
+                id="officer",
+                name="Officer",
+                period="2026.08",
+                team_size=1,
+                my_role="1인 구축",
+                contributions=["Python과 cron으로 업무 자동화"],
+                skills=["Python"],
+            ),
+            Project(
+                id="oma",
+                name="oh_my_agents",
+                period="2026.06",
+                team_size=1,
+                my_role="1인 개발",
+                contributions=["LangGraph 없이 에이전트 파이프라인 설계"],
+                skills=["Python", "LangGraph"],
+            ),
+        ]
+    )
+    judged = {
+        "items": [
+            {"req_index": 0, "strength": "직접 구현", "evidence_ids": ["officer", "oma"]},
+            {"req_index": 1, "strength": "사용 경험", "evidence_ids": ["oma"]},
+        ]
+    }
+    graph, deps = make(data_dir, [extraction(), judged])
+    deps.db = db
+    start(graph, "t1")
+    wait = pending_interrupt(graph, "t1")
+    assert wait["fit_score"] is not None and wait["band"] == "합격권"
+    assert [m["strength"] for m in wait["matches"]] == ["직접 구현", "사용 경험"]
+    assert wait["matches"][0]["evidence"] == ["officer", "oma"]
+
+
+def test_tests_use_example_profile_not_local(monkeypatch):
+    import os
+
+    from fitcheck.config import EXAMPLE, load_profile
+
+    assert os.environ["FIT_PROFILE_FILE"] == str(EXAMPLE), "conftest 안전장치가 켜져 있어야 한다"
+    _, _, db = load_profile()
+    assert {p.id for p in db.projects} == {"sample-chatbot", "sample-dashboard"}

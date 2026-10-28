@@ -1,7 +1,7 @@
 """내 조건과 역량 불러오기
 
 competencies.local.yaml (내 실제 정보, Git 제외)이 있으면 그걸 쓰고,
-없으면 competencies.example.yaml (공개용 예시)을 쓴다.
+없으면 competencies.example.yaml (공개용 예시)을 쓴다. FIT_PROFILE_FILE로 직접 지정할 수 있다 (테스트는 항상 예시).
 """
 
 from __future__ import annotations
@@ -18,7 +18,10 @@ EXAMPLE = ROOT / "competencies.example.yaml"
 
 
 def load_profile(path: str | Path | None = None) -> tuple[UserConstraints, UserPreferences, CompetencyDB]:
-    src = Path(path) if path else (LOCAL if LOCAL.exists() else EXAMPLE)
+    import os
+
+    override = os.environ.get("FIT_PROFILE_FILE")
+    src = Path(path) if path else Path(override) if override else (LOCAL if LOCAL.exists() else EXAMPLE)
     raw = yaml.safe_load(src.read_text(encoding="utf-8"))
     return (
         UserConstraints(**raw["constraints"]),

@@ -5,7 +5,6 @@
 
 아직 구현하지 않은 노드는 자리표시자다.
 - collect_images: 이미지 공고 (T8). 지금은 안내 후 종료
-- match_requirements: 요건 매칭 (T9). 지금은 매칭 결과 없음 → 적합도 계산 불가 → 라벨 최대 안정권
 - summarize_gap: 보완 포인트 (T10), draft_resume: 이력서 방향 (T11)
 
 설계와 다른 점: 파싱이 재시도까지 실패하면 설계는 사람 확인으로 보내지만, 고칠 공고 값 자체가 없어서
@@ -38,6 +37,7 @@ from .nodes.gate import (
     route_after_eligibility,
     route_after_supported,
 )
+from .nodes.match import match_requirements
 from .nodes.normalize import PlaywrightFetcher, normalize_input
 from .nodes.parse import parse_posting
 from .preferences import check_preferences
@@ -209,7 +209,10 @@ def human_verify_node(state: GraphState, deps: GraphDeps) -> dict:
 
 
 def match_requirements_node(state: GraphState, deps: GraphDeps) -> dict:
-    return {"matches": []}  # 자리표시자 (T9)
+    used = state.get("llm_calls", 0)
+    budget = LLMBudget(used=used)
+    matches = match_requirements(state["posting"], deps.db, llm=deps.llm, budget=budget)
+    return {"matches": matches, "llm_calls": budget.used - used}
 
 
 def score_node(state: GraphState, deps: GraphDeps) -> dict:
@@ -245,7 +248,18 @@ def _decide_payload(state: GraphState) -> dict:
         "checks": [
             {"id": c.id, "kind": c.kind, "label": c.label, "result": c.result, "detail": c.detail} for c in e.checks
         ],
-        "matches": [],
+        "matches": [
+            {
+                "text": m.requirement.text,
+                "is_required": m.is_required,
+                "core": m.requirement.core,
+                "category": m.requirement.category,
+                "strength": m.strength,
+                "status": m.status,
+                "evidence": m.evidence_project_ids,
+            }
+            for m in (state.get("matches") or [])
+        ],
         "preferences": state["preferences"].summary if state.get("preferences") else "",
         "gap_summary": state.get("gap_summary", ""),
         "already_applied": [{"title": r.title, "status": r.status.value} for r in (state.get("already_applied") or [])],

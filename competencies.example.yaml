@@ -51,3 +51,4 @@ projects:
       - React로 차트 화면 구현
     results: []
     skills: [React, TypeScript]     # 백엔드는 다른 팀원 담당이라 제외
+    touched_skills: [AWS]           # 조금 만져본 기술. 매칭에서 '조금 만져봄'(0.3)까지만 인정

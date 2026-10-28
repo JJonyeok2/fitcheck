@@ -14,10 +14,10 @@ TASKS.md T9, AGENT_DESIGN 4.6, 7장, DESIGN_DECISIONS D4, D12, D15
 from __future__ import annotations
 
 import pytest
-from fitcheck.aliases import canonical, skills_in
-from fitcheck.nodes.match import match_requirements
 
+from fitcheck.aliases import canonical, skills_in
 from fitcheck.llm import FakeLLM, UsageLedger
+from fitcheck.nodes.match import match_requirements
 from fitcheck.schemas import CompetencyDB, ExtractionMeta, JobPosting, Project, Requirement
 
 DB = CompetencyDB(
