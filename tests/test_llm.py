@@ -234,3 +234,30 @@ def test_load_env_reads_file_without_overriding(tmp_path, monkeypatch):
 
 def test_load_env_missing_file_is_ok(tmp_path):
     load_env(tmp_path / "없음.env")
+
+
+# ── 테스트가 실제 .env를 읽지 않는지 (윈도우에서 실제 키가 든 .env 때문에 실패했던 사례) ──
+
+
+def test_tests_never_read_real_env_file(tmp_path, monkeypatch):
+    import os
+
+    real = tmp_path / ".env"
+    real.write_text(f"OPENAI_API_KEY={FAKE_KEY}\n", encoding="utf-8")
+    assert os.environ["FIT_ENV_FILE"] == "none", "conftest 안전장치가 켜져 있어야 한다"
+    monkeypatch.setattr("fitcheck.config.ROOT", tmp_path)  # 저장소 루트에 키가 든 .env가 있는 상황
+    monkeypatch.setenv("FIT_LLM", "openai")
+    with pytest.raises(LLMError):
+        get_llm()
+    assert "OPENAI_API_KEY" not in os.environ
+
+
+def test_env_file_location_can_be_overridden(tmp_path, monkeypatch):
+    import os
+
+    custom = tmp_path / "custom.env"
+    custom.write_text("FIT_TEXT_MODEL=gpt-6.1-terra\n", encoding="utf-8")
+    monkeypatch.delenv("FIT_TEXT_MODEL", raising=False)
+    monkeypatch.setenv("FIT_ENV_FILE", str(custom))
+    load_env()
+    assert os.environ["FIT_TEXT_MODEL"] == "gpt-6.1-terra"

@@ -31,10 +31,16 @@ def load_env(path: str | Path | None = None) -> None:
     """.env 파일을 읽어 환경 변수로 넣는다. 이미 설정된 값은 덮어쓰지 않는다 (CI, 셸에서 준 값이 우선).
 
     형식: KEY=VALUE, 빈 줄과 #으로 시작하는 줄은 무시, 값의 바깥 따옴표는 벗긴다.
+    위치: path 인자 → FIT_ENV_FILE 환경 변수 → 저장소 루트의 .env. FIT_ENV_FILE=none이면 읽지 않는다.
     """
     import os
 
-    src = Path(path) if path else ROOT / ".env"
+    if path is None:
+        override = os.environ.get("FIT_ENV_FILE")
+        if override is not None and override.strip().lower() in ("", "none"):
+            return  # 테스트와 CI: 실제 .env를 읽지 않는다
+        path = override or ROOT / ".env"
+    src = Path(path)
     if not src.exists():
         return
     for raw in src.read_text(encoding="utf-8").splitlines():
