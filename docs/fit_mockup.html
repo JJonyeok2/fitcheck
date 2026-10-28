@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>공고 FIT 진단</title>
+<link rel="icon" href="brand/mark.svg" type="image/svg+xml">
 <script>/* 그리기 전에 저장된 모드를 적용해 깜빡임 방지 */try{var m=localStorage.getItem("fitcheck-theme");if(m==="light"||m==="dark")document.documentElement.setAttribute("data-theme",m)}catch(e){}</script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
@@ -36,7 +37,8 @@ h2{font-size:15px;margin:0 0 12px}
 .input input{flex:1;min-width:0;border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:10px;padding:9px 10px;font:inherit;font-size:13px}
 .input input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
 .logo{display:flex;align-items:center;gap:8px;font-size:20px;font-weight:800;letter-spacing:-.5px;margin-bottom:14px}
-.logo i{width:12px;height:12px;border-radius:3px;background:var(--accent)}
+.logo svg{flex:none}
+.logo b{color:var(--accent)} .logo span{color:var(--ink)}
 .top-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
 .top-row .logo{margin-bottom:0}
 .theme{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px;background:var(--soft)}
@@ -123,7 +125,35 @@ html{color-scheme:light dark}
 <div class="wrap">
   <section class="card list">
     <div class="top-row">
-      <div class="logo"><i></i>fitcheck</div>
+      <div class="logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" aria-hidden="true" width="26" height="26">
+  <defs>
+    <linearGradient id="fc-body" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9B7BFF"/>
+      <stop offset="1" stop-color="#6B4EFF"/>
+    </linearGradient>
+    <linearGradient id="fc-wave" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#5B33F0"/>
+      <stop offset="1" stop-color="#7A5BFF"/>
+    </linearGradient>
+  </defs>
+  <!-- F: 윗 막대와 기둥 -->
+  <rect x="34" y="22" width="196" height="64" rx="30" fill="url(#fc-body)"/>
+  <rect x="34" y="22" width="66" height="214" rx="30" fill="url(#fc-body)"/>
+  <!-- 이력서 카드 -->
+  <g transform="rotate(-4 120 100)">
+    <rect x="62" y="38" width="104" height="128" rx="7" fill="#F3F0FF"/>
+    <circle cx="86" cy="64" r="9.5" fill="#6B4EFF"/>
+    <path d="M71 90a15 13 0 0 1 30 0z" fill="#6B4EFF"/>
+    <rect x="108" y="58" width="44" height="6" rx="3" fill="#9B7BFF"/>
+    <rect x="108" y="74" width="34" height="6" rx="3" fill="#9B7BFF"/>
+    <rect x="74" y="104" width="68" height="6" rx="3" fill="#9B7BFF"/>
+    <rect x="74" y="120" width="52" height="6" rx="3" fill="#9B7BFF"/>
+  </g>
+  <!-- F: 가운데 막대 (카드 아래를 덮는 물결) -->
+  <path d="M34 200 C34 160 70 142 120 132 L196 118 a26 26 0 0 1 8 51 L120 186 C80 196 60 214 60 236 L60 236 a30 30 0 0 1 -26 -30z" fill="url(#fc-wave)"/>
+  <!-- 체크 -->
+  <path d="M158 192 L184 216 L232 162" fill="none" stroke="#B39BFF" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+</svg><span><b>fit</b><span>check</span></span></div>
       <div class="theme" role="group" aria-label="화면 모드">
         <button data-theme-set="light">라이트</button><button data-theme-set="dark">다크</button><button data-theme-set="system">시스템</button>
       </div>

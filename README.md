@@ -1,3 +1,5 @@
+<p align="center"><img src="docs/brand/logo-original.png" alt="fitcheck" width="420"></p>
+
 # fitcheck
 
 IT 직무 채용공고를 넣으면 **지원할 수 있는 공고인지, 얼마나 맞는지, 무엇이 부족한지**를 판정하고, 지원 결정과 이후 진행 상황까지 관리하는 에이전트입니다.

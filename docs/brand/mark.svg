@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="fitcheck">
+  <defs>
+    <linearGradient id="fc-body" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9B7BFF"/>
+      <stop offset="1" stop-color="#6B4EFF"/>
+    </linearGradient>
+    <linearGradient id="fc-wave" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#5B33F0"/>
+      <stop offset="1" stop-color="#7A5BFF"/>
+    </linearGradient>
+  </defs>
+  <!-- F: 윗 막대와 기둥 -->
+  <rect x="34" y="22" width="196" height="64" rx="30" fill="url(#fc-body)"/>
+  <rect x="34" y="22" width="66" height="214" rx="30" fill="url(#fc-body)"/>
+  <!-- 이력서 카드 -->
+  <g transform="rotate(-4 120 100)">
+    <rect x="62" y="38" width="104" height="128" rx="7" fill="#F3F0FF"/>
+    <circle cx="86" cy="64" r="9.5" fill="#6B4EFF"/>
+    <path d="M71 90a15 13 0 0 1 30 0z" fill="#6B4EFF"/>
+    <rect x="108" y="58" width="44" height="6" rx="3" fill="#9B7BFF"/>
+    <rect x="108" y="74" width="34" height="6" rx="3" fill="#9B7BFF"/>
+    <rect x="74" y="104" width="68" height="6" rx="3" fill="#9B7BFF"/>
+    <rect x="74" y="120" width="52" height="6" rx="3" fill="#9B7BFF"/>
+  </g>
+  <!-- F: 가운데 막대 (카드 아래를 덮는 물결) -->
+  <path d="M34 200 C34 160 70 142 120 132 L196 118 a26 26 0 0 1 8 51 L120 186 C80 196 60 214 60 236 L60 236 a30 30 0 0 1 -26 -30z" fill="url(#fc-wave)"/>
+  <!-- 체크 -->
+  <path d="M158 192 L184 216 L232 162" fill="none" stroke="#B39BFF" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
