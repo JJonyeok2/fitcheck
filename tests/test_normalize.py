@@ -16,6 +16,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+
 from fitcheck.nodes.normalize import (
     PlaywrightFetcher,
     UnsafeURL,
@@ -43,7 +44,9 @@ def fixture_routes(requested: list[str]):
                 body=(PAGES / "image_posting.html").read_text(encoding="utf-8"), content_type="text/html"
             )
         if url == f"{BASE}/posting/private":
-            return route.fulfill(status=302, headers={"location": f"{BASE}/member/login?next=/posting/private"})
+            # 같은 주소에서 로그인 폼을 보여주는 로그인 벽
+            # (Playwright는 가로챈 요청의 302 리다이렉트 다음 요청을 다시 가로채지 않아서, 리다이렉트 대신 이렇게 흉내 낸다)
+            return route.fulfill(body=(PAGES / "login.html").read_text(encoding="utf-8"), content_type="text/html")
         if url.startswith(f"{BASE}/member/login"):
             return route.fulfill(body=(PAGES / "login.html").read_text(encoding="utf-8"), content_type="text/html")
         if url == f"{BASE}/posting/gone":
@@ -140,7 +143,8 @@ def test_url_text_posting_extracts_main_only(fetcher, requested):
     r = normalize_input(url=f"{BASE}/posting/text", fetcher=fetcher)
     assert r.error is None and r.input_type == "url" and r.text_is_sufficient
     assert "Python으로 업무 자동화" in r.text and "LangGraph 사용 경험" in r.text
-    for noise in ("회원가입", "추천 공고", "이용약관", "숨겨진 스크립트"):
+    # 본문 안에 끼어 있는 공유 버튼, 비슷한 공고 박스도 빠져야 한다
+    for noise in ("회원가입", "추천 공고", "이용약관", "숨겨진 스크립트", "스크랩", "비슷한 공고"):
         assert noise not in r.text, f"본문이 아닌 '{noise}'가 들어가면 안 된다"
     assert r.source_url == f"{BASE}/posting/text"
 
@@ -157,10 +161,15 @@ def test_image_posting_is_insufficient_and_returns_image_urls(fetcher, requested
     assert "이미지테크" in r.text, "이미지 위의 제목 글자는 같이 넘긴다"
 
 
-def test_login_redirect_stops_with_paste_message(fetcher, requested):
+def test_login_wall_on_same_url_stops_with_paste_message(fetcher, requested):
     r = normalize_input(url=f"{BASE}/posting/private", fetcher=fetcher)
     assert r.error == "login_required" and "붙여넣" in r.message
     assert r.text == ""
+
+
+def test_login_url_stops_with_paste_message(fetcher, requested):
+    r = normalize_input(url=f"{BASE}/member/login?next=/posting/1", fetcher=fetcher)
+    assert r.error == "login_required"
 
 
 def test_http_error_is_unreachable(fetcher, requested):

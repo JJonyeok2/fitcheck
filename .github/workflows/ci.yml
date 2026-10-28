@@ -34,6 +34,14 @@ jobs:
       - name: 의존성 설치 (uv.lock 그대로)
         run: uv sync --locked --group dev
 
+      - name: Playwright 브라우저 설치 (URL 입력 테스트용, Linux)
+        if: runner.os == 'Linux'
+        run: uv run playwright install --with-deps chromium
+
+      - name: Playwright 브라우저 설치 (URL 입력 테스트용, Windows)
+        if: runner.os == 'Windows'
+        run: uv run playwright install chromium
+
       - name: gitleaks 설치 (커밋 차단 테스트용, Linux)
         if: runner.os == 'Linux'
         run: |

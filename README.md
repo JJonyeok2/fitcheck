@@ -57,8 +57,11 @@ uv sync --group dev
 # 3. 커밋 전 검사 켜기 (비밀 값, 개인 파일, 코드 스타일)
 uv run pre-commit install
 
-# 4. 테스트 (실제 LLM API를 부르지 않음)
-$env:FIT_LLM = "fake"; uv run pytest
+# 3-1. 공고 URL을 여는 브라우저 (한 번만)
+uv run playwright install chromium
+
+# 4. 테스트 (실제 LLM API를 부르지 않음. 테스트가 알아서 가짜 모드로 돈다)
+uv run pytest
 ```
 
 내 정보 파일 만들기:
@@ -74,7 +77,8 @@ Copy-Item .env.example .env      # 메모장으로 열어 OPENAI_API_KEY 입력
 brew install uv gitleaks         # Linux는 각 도구의 설치 안내 참고
 uv sync --group dev
 uv run pre-commit install
-FIT_LLM=fake uv run pytest
+uv run playwright install chromium
+uv run pytest
 
 cp competencies.example.yaml competencies.local.yaml
 cp .env.example .env
