@@ -487,6 +487,7 @@ class GraphState(TypedDict, total=False):
     fit_band: FitBand
     preferences: PreferenceResult
     gap_summary: str
+    gap_summary_refined: bool  # LLM으로 다듬기를 이미 시도했는가 (한 번만, FitGraph.refine_summary)
 
     # 사람 결정 (interrupt)
     overrides: Annotated[list[str], _union]

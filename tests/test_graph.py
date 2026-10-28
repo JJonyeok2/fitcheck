@@ -154,17 +154,15 @@ def test_override_rejudges_and_changes_band(data_dir):
             {"req_index": 1, "strength": "직접 구현", "evidence_ids": ["p"]},
         ]
     }
-    # 매칭은 인정 전과 후에 한 번씩 돈다. 보완 포인트는 보류가 있는 첫 판정에서만 LLM을 부른다
-    # (인정 후에는 보류도 부족한 요건도 없어서 코드 문장)
-    note = {"summary": "정보처리기사 취득 여부를 먼저 확인해 주세요."}
-    graph, deps = make(data_dir, [_cert_required(), strong, note, strong])
+    # 매칭은 인정 전과 후에 한 번씩 돈다. 보완 포인트는 규칙 문장이라 분석 중에 LLM을 부르지 않는다
+    graph, deps = make(data_dir, [_cert_required(), strong, strong])
     deps.db = CompetencyDB(
         projects=[Project(id="p", name="P", period="2026", my_role="1인", skills=["Python", "LangGraph"])]
     )
     pid = start(graph, "t1", text)["posting_id"]
     first = pending_interrupt(graph, "t1")
     assert first["band"] == "불합격권"
-    assert first["gap_summary"] == note["summary"]
+    assert "정보처리기사" in first["gap_summary"], "보류 조건을 먼저 말하는 규칙 문장"
     hold = next(c["id"] for c in first["checks"] if c["result"] == "hold")
 
     resume(graph, "t1", {"decision": "override", "condition_ids": [hold]})
@@ -317,19 +315,53 @@ def test_tests_use_example_profile_not_local(monkeypatch):
 # ── 보완 포인트 연결 (T10) ───────────────────────────────
 
 
-def test_gap_summary_reaches_decide(data_dir):
-    """역량이 비어 있으면 요건이 모두 '없음'이라 보완할 게 있다 → 보완 포인트 LLM 1회"""
-    text = "필수 요건에 맞는 프로젝트 근거가 아직 없어요. 핵심 요건부터 작은 프로젝트로 채워 보세요."
-    graph, deps = make(data_dir, [extraction(), {"summary": text}])
+def test_decide_shows_rule_summary_without_waiting_for_llm(data_dir):
+    """분석은 규칙 문장으로 바로 결정 화면까지 간다. 보완 포인트 LLM을 기다리지 않는다"""
+    graph, deps = make(data_dir, [extraction()])
     out = start(graph, "t1")
     wait = pending_interrupt(graph, "t1")
-    assert wait["gap_summary"] == text
-    assert out["llm_calls"] == 2  # 파싱 1 + 보완 포인트 1 (후보가 없어 매칭은 0)
+    assert wait["kind"] == "decide" and wait["band"] in wait["gap_summary"]
+    assert out["llm_calls"] == 1, "파싱 1회뿐 (후보가 없어 매칭 0, 보완 포인트 0)"
 
 
-def test_gap_summary_falls_back_without_llm_answer(data_dir):
-    """보완 포인트 LLM이 실패해도 결정 화면까지 간다 (코드가 만든 기본 문장)"""
+def test_refine_summary_replaces_with_llm_sentence(data_dir):
+    text = "필수 요건에 맞는 프로젝트 근거가 아직 없어요. 핵심 요건부터 작은 프로젝트로 채워 보세요."
+    graph, deps = make(data_dir, [extraction(), {"summary": text}])
+    start(graph, "t1")
+    out = graph.refine_summary("t1")
+    assert out.source == "llm"
+    wait = pending_interrupt(graph, "t1")
+    assert wait["kind"] == "decide" and wait["gap_summary"] == text
+    assert graph.values("t1")["llm_calls"] == 2, "다듬기 호출도 공고당 호출 수에 들어간다"
+
+
+def test_refine_summary_runs_once(data_dir):
+    """다듬기는 한 번만. 실패해도 규칙 문장을 그대로 두고 다시 부르지 않는다 (비용)"""
     graph, deps = make(data_dir, [extraction()])
     start(graph, "t1")
-    wait = pending_interrupt(graph, "t1")
-    assert wait["kind"] == "decide" and wait["band"] in wait["gap_summary"]
+    rule = pending_interrupt(graph, "t1")["gap_summary"]
+    first = graph.refine_summary("t1")  # 응답 없음 → 실패 → 규칙 문장 유지
+    assert first.source == "rule" and pending_interrupt(graph, "t1")["gap_summary"] == rule
+    calls = len(deps.llm.prompts)
+    assert graph.refine_summary("t1") is None and len(deps.llm.prompts) == calls
+
+
+def test_refine_summary_does_nothing_when_not_deciding(data_dir):
+    graph, deps = make(data_dir, [extraction()])
+    assert graph.refine_summary("없는-thread") is None
+    start(graph, "t1")
+    resume(graph, "t1", {"decision": "skip"})
+    calls = len(deps.llm.prompts)
+    assert graph.refine_summary("t1") is None and len(deps.llm.prompts) == calls
+
+
+def test_refine_again_after_override_rejudge(data_dir):
+    """보류 인정으로 다시 판정하면 보완 포인트도 새로 다듬을 수 있다"""
+    graph, deps = make(data_dir, [_cert_required(), {"summary": "정보처리기사 취득 여부를 먼저 확인해 주세요."}])
+    start(graph, "t1", TEXT + "- 정보처리기사 필수\n")
+    assert graph.refine_summary("t1").source == "llm"
+    hold = next(c["id"] for c in pending_interrupt(graph, "t1")["checks"] if c["result"] == "hold")
+    resume(graph, "t1", {"decision": "override", "condition_ids": [hold]})
+    assert "정보처리기사 취득" not in pending_interrupt(graph, "t1")["gap_summary"], "다시 판정하면 규칙 문장부터"
+    deps.llm.responses.append({"summary": "필수 요건 근거를 프로젝트로 보강해 보세요."})
+    assert graph.refine_summary("t1").source == "llm"

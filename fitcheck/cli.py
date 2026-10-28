@@ -162,6 +162,8 @@ def main(argv: list[str] | None = None) -> int:
             graph.resume(thread, value)
         else:
             thread = args.thread
+        if args.cmd != "show":
+            graph.refine_summary(thread)  # 터미널은 기다려도 되니 바로 다듬는다 (화면은 백그라운드)
         _report(graph, thread)
         return 0
     except LLMError as e:

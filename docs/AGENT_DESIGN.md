@@ -110,6 +110,7 @@ flowchart TD
 | `matches` | `match_requirements` | `score`, `draft_resume` | |
 | `gap_report`, `education_tier`, `fit_band`, `preferences` | `score` | `summarize_gap`, `decide`, `save_record` | |
 | `gap_summary` | `summarize_gap` | `decide` | 추가됨 (T10). `GapReport.summary`는 쓰지 않는다 |
+| `gap_summary_refined` | `summarize_gap`(False), `refine_summary`(True) | `refine_summary` | LLM 다듬기는 한 번만. 다시 판정하면 False로 돌아간다 |
 | `overrides` | `decide`(사람 입력) | `check_eligibility` | 누적 (리듀서: 합집합) |
 | `decision` | `decide` | 분기, `save_record` | |
 | `resume_draft` | `draft_resume` | `save_record` | |
@@ -248,7 +249,7 @@ def route_after_decide(s) -> Literal["check_eligibility", "draft_resume", "save_
 | `vision_extract` | 이미지 조각 1개 | `{text: str, uncertain_lines: list[int]}` | 요약, 재구성 금지. 보이는 글자 그대로 | 조각 수 (최대 8) |
 | `parse_posting` | 정규화 텍스트, 직무 분류 목록 | `JobPosting` | 공고에 없는 값 추측 금지. 직무는 담당업무 기준 | 1 (+재시도 최대 2) |
 | `match_requirements` | 요건 목록 + **후보 프로젝트의 역할, 기여만** | `list[{req_index, strength, evidence_ids, note}]` (strength 5단계) | 후보 밖 프로젝트 언급 금지. 근거 없으면 missing | 1 (요건 전체를 한 번에) |
-| `summarize_gap` | 코드가 계산한 라벨, 충족률, 부족 요건 | `{summary: str}` (2문장 이내) | 넘겨받지 않은 숫자, 라벨 생성 금지 | 1 |
+| `summarize_gap` | 코드가 계산한 라벨, 충족률, 부족 요건 | `{summary: str}` (2문장 이내) | 넘겨받지 않은 숫자, 라벨 생성 금지 | 그래프 안에서는 0 (규칙 문장). 결정 화면이 뜬 뒤 `FitGraph.refine_summary`가 1회 |
 | `draft_resume` | 공고 요건, matched 요건과 근거 프로젝트 | `list[{project_id, order, emphasis}]` | 역량 DB에 없는 경험 생성 금지 | 1 |
 
 **코드가 LLM 출력을 다시 검사하는 항목**

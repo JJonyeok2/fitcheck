@@ -28,7 +28,7 @@ from pydantic import ValidationError
 from .budget import LLMBudget
 from .filters import education_tier, fit_band
 from .llm import BaseLLM
-from .nodes.gap import summarize_gap
+from .nodes.gap import GapSummary, default_summary, summarize_gap
 from .nodes.gate import (
     GateDeps,
     check_duplicate_node,
@@ -229,10 +229,9 @@ def score_node(state: GraphState, deps: GraphDeps) -> dict:
 
 
 def summarize_gap_node(state: GraphState, deps: GraphDeps) -> dict:
-    used = state.get("llm_calls", 0)
-    budget = LLMBudget(used=used)
-    out = summarize_gap(state["gap_report"], state["fit_band"], state["eligibility"], llm=deps.llm, budget=budget)
-    return {"gap_summary": out.text, "llm_calls": budget.used - used}
+    """규칙 문장으로 바로 결정 화면까지 간다. LLM 문장은 FitGraph.refine_summary가 나중에 덮어쓴다."""
+    text = default_summary(state["gap_report"], state["fit_band"], state["eligibility"])
+    return {"gap_summary": text, "gap_summary_refined": False}
 
 
 # ──────────────────────────────────────────────
@@ -344,9 +343,10 @@ def route_after_decide(state: GraphState) -> str:
 class FitGraph:
     """컴파일된 그래프와 체크포인터. thread_id로 멈춘 지점에서 이어 간다."""
 
-    def __init__(self, app, conn: sqlite3.Connection):
+    def __init__(self, app, conn: sqlite3.Connection, deps: GraphDeps | None = None):
         self.app = app
         self._conn = conn
+        self._deps = deps
 
     @staticmethod
     def config(thread_id: str) -> dict:
@@ -360,6 +360,28 @@ class FitGraph:
 
     def values(self, thread_id: str) -> dict:
         return dict(self.app.get_state(self.config(thread_id)).values)
+
+    def refine_summary(self, thread_id: str) -> GapSummary | None:
+        """결정 대기 중인 공고의 보완 포인트를 LLM 문장으로 다듬는다. 한 번만 시도한다.
+
+        분석은 규칙 문장으로 먼저 끝내서 사용자를 기다리게 하지 않고, 이 단계는 화면이 뜬 뒤 따로 돈다
+        (API에서는 백그라운드). 시도하지 않았으면 None. 실패하면 규칙 문장을 그대로 둔다.
+        """
+        cfg = self.config(thread_id)
+        st = self.app.get_state(cfg)
+        v = st.values
+        if self._deps is None or st.next != ("decide",) or v.get("gap_summary_refined", True):
+            return None
+        used = v.get("llm_calls", 0)
+        budget = LLMBudget(used=used)
+        out = summarize_gap(v["gap_report"], v["fit_band"], v["eligibility"], llm=self._deps.llm, budget=budget)
+        self.app.update_state(
+            cfg,
+            {"gap_summary": out.text, "gap_summary_refined": True, "llm_calls": budget.used - used},
+            as_node="summarize_gap",
+        )
+        self.app.invoke(None, cfg)  # 결정 화면을 새 문장으로 다시 띄운다
+        return out
 
     def close(self) -> None:
         self._conn.close()
@@ -410,4 +432,4 @@ def build_graph(deps: GraphDeps) -> FitGraph:
 
     deps.checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(deps.checkpoint_path), check_same_thread=False)
-    return FitGraph(g.compile(checkpointer=SqliteSaver(conn)), conn)
+    return FitGraph(g.compile(checkpointer=SqliteSaver(conn)), conn, deps)
