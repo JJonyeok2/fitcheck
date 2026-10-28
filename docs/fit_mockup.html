@@ -6,7 +6,7 @@
 <title>공고 FIT 진단</title>
 <link rel="icon" href="brand/mark.svg" type="image/svg+xml">
 <script>/* 그리기 전에 저장된 모드를 적용해 깜빡임 방지 */try{var m=localStorage.getItem("fitcheck-theme");if(m==="light"||m==="dark")document.documentElement.setAttribute("data-theme",m)}catch(e){}</script>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#f4f5f7; --card:#fff; --soft:#f6f7f9; --line:#e6e8ec; --ink:#1b1d21; --sub:#6b7280;
@@ -36,9 +36,11 @@ h2{font-size:15px;margin:0 0 12px}
 .input{display:flex;gap:6px;margin-bottom:8px}
 .input input{flex:1;min-width:0;border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:10px;padding:9px 10px;font:inherit;font-size:13px}
 .input input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
-.logo{display:flex;align-items:center;gap:8px;font-size:20px;font-weight:800;letter-spacing:-.5px;margin-bottom:14px}
+.logo{display:flex;align-items:center;gap:8px;font-size:21px;letter-spacing:-.4px;margin-bottom:14px}
 .logo svg{flex:none}
-.logo b{color:var(--accent)} .logo span{color:var(--ink)}
+.logo .wm{line-height:1}
+.logo .wm b{color:var(--accent);font-weight:900}
+.logo .wm span{color:var(--ink);font-weight:300}
 .top-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
 .top-row .logo{margin-bottom:0}
 .theme{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px;background:var(--soft)}
@@ -153,7 +155,7 @@ html{color-scheme:light dark}
   <path d="M34 200 C34 160 70 142 120 132 L196 118 a26 26 0 0 1 8 51 L120 186 C80 196 60 214 60 236 L60 236 a30 30 0 0 1 -26 -30z" fill="url(#fc-wave)"/>
   <!-- 체크 -->
   <path d="M158 192 L184 216 L232 162" fill="none" stroke="#B39BFF" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
-</svg><span><b>fit</b><span>check</span></span></div>
+</svg><span class="wm" aria-label="Fitcheck"><b>Fit</b><span>check</span></span></div>
       <div class="theme" role="group" aria-label="화면 모드">
         <button data-theme-set="light">라이트</button><button data-theme-set="dark">다크</button><button data-theme-set="system">시스템</button>
       </div>
