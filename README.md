@@ -43,24 +43,44 @@ docs/             Spec, 화면 목업
 
 ## 개발 환경
 
-```bash
-# 1. 의존성 (uv.lock 그대로)
+### Windows (PowerShell)
+
+```powershell
+# 1. 도구 설치 (한 번만)
+winget install --id=astral-sh.uv -e
+winget install --id=Gitleaks.Gitleaks -e
+# 설치 후 PowerShell을 새로 열어야 명령을 찾는다
+
+# 2. 의존성 (uv.lock 그대로)
 uv sync --group dev
 
-# 2. 커밋 전 검사 (비밀 값, 개인 파일, 코드 스타일)
-brew install gitleaks          # macOS. 다른 OS는 gitleaks 릴리스 페이지에서 설치
+# 3. 커밋 전 검사 켜기 (비밀 값, 개인 파일, 코드 스타일)
 uv run pre-commit install
 
-# 3. 테스트 (실제 LLM API를 부르지 않음)
-FIT_LLM=fake uv run pytest
+# 4. 테스트 (실제 LLM API를 부르지 않음)
+$env:FIT_LLM = "fake"; uv run pytest
 ```
 
-내 정보로 쓰려면 예시 파일을 복사해서 고칩니다. `competencies.local.yaml`과 `.env`는 Git에 올라가지 않고, 실수로 `git add -f` 해도 커밋 단계에서 막힙니다.
+내 정보 파일 만들기:
+
+```powershell
+Copy-Item competencies.example.yaml competencies.local.yaml
+Copy-Item .env.example .env      # 메모장으로 열어 OPENAI_API_KEY 입력
+```
+
+### macOS, Linux
 
 ```bash
+brew install uv gitleaks         # Linux는 각 도구의 설치 안내 참고
+uv sync --group dev
+uv run pre-commit install
+FIT_LLM=fake uv run pytest
+
 cp competencies.example.yaml competencies.local.yaml
-cp .env.example .env           # OPENAI_API_KEY 입력
+cp .env.example .env
 ```
+
+`competencies.local.yaml`과 `.env`는 Git에 올라가지 않고, 실수로 `git add -f` 해도 커밋 단계에서 막힙니다. 줄바꿈은 `.gitattributes`로 LF로 고정되어 있어서 윈도우에서도 형식 검사 결과가 같습니다.
 
 ## 기술 스택
 

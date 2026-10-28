@@ -1,0 +1,5 @@
+# 윈도우에서 받아도 줄바꿈을 LF로 유지한다 (ruff format, gitleaks 결과가 OS마다 달라지지 않게)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
