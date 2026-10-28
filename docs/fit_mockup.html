@@ -10,15 +10,18 @@
   --bg:#f4f5f7; --card:#fff; --soft:#f6f7f9; --line:#e6e8ec; --ink:#1b1d21; --sub:#6b7280;
   --pass:#2563eb; --pass-bg:#e8effd; --stable:#e07b10; --stable-bg:#fdf1e3;
   --low:#d23f36; --low-bg:#fbeceb; --block:#7b8190; --block-bg:#eef0f3; --brand:#1e2533;
+  --accent:#6b4eff; --accent-bg:#efebff;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#111316; --card:#1a1d21; --soft:#22262b; --line:#2e3238; --ink:#eceef1; --sub:#9aa1ab;
   --pass:#6b9cf0; --pass-bg:#1a2742; --stable:#f0a24a; --stable-bg:#36260f;
-  --low:#ec6c64; --low-bg:#3a1c1a; --block:#8d94a0; --block-bg:#2a2e34; --brand:#e8ebf0;}}
+  --low:#ec6c64; --low-bg:#3a1c1a; --block:#8d94a0; --block-bg:#2a2e34; --brand:#e8ebf0;
+  --accent:#9b87ff; --accent-bg:#2a2447;}}
 :root[data-theme="dark"]{
   --bg:#111316; --card:#1a1d21; --soft:#22262b; --line:#2e3238; --ink:#eceef1; --sub:#9aa1ab;
   --pass:#6b9cf0; --pass-bg:#1a2742; --stable:#f0a24a; --stable-bg:#36260f;
-  --low:#ec6c64; --low-bg:#3a1c1a; --block:#8d94a0; --block-bg:#2a2e34; --brand:#e8ebf0;}
+  --low:#ec6c64; --low-bg:#3a1c1a; --block:#8d94a0; --block-bg:#2a2e34; --brand:#e8ebf0;
+  --accent:#9b87ff; --accent-bg:#2a2447;}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans KR",system-ui,sans-serif;font-size:14px}
 button{font:inherit;color:inherit}
@@ -30,9 +33,12 @@ h2{font-size:15px;margin:0 0 12px}
 /* 입력 */
 .input{display:flex;gap:6px;margin-bottom:8px}
 .input input{flex:1;min-width:0;border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:10px;padding:9px 10px;font:inherit;font-size:13px}
+.input input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.logo{display:flex;align-items:center;gap:8px;font-size:20px;font-weight:800;letter-spacing:-.5px;margin-bottom:14px}
+.logo i{width:12px;height:12px;border-radius:3px;background:var(--accent)}
 .input button{border:0;background:var(--brand);color:var(--card);border-radius:10px;padding:0 12px;cursor:pointer;font-weight:700}
 .demo{font-size:12px;color:var(--sub);margin-bottom:12px}
-.demo button{border:0;background:none;color:var(--pass);cursor:pointer;padding:0;text-decoration:underline}
+.demo button{border:0;background:none;color:var(--accent);cursor:pointer;padding:0;text-decoration:underline}
 .toast{display:none;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.6;margin-bottom:12px;background:var(--block-bg);color:var(--ink)}
 .toast.on{display:block}
 
@@ -43,7 +49,7 @@ h2{font-size:15px;margin:0 0 12px}
 .filters button.on{background:var(--ink);color:var(--card);border-color:var(--ink)}
 .item{padding:12px;border-radius:12px;cursor:pointer;border:1px solid transparent;margin-bottom:6px}
 .item:hover{background:var(--soft)}
-.item.on{border-color:var(--line);background:var(--soft)}
+.item.on{border-color:var(--accent);background:var(--soft)}
 .item .co{font-size:12px;color:var(--sub)}
 .item .ti{font-weight:700;margin:2px 0 6px}
 .badges{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
@@ -52,7 +58,7 @@ h2{font-size:15px;margin:0 0 12px}
 .b-불합격권{color:var(--low);background:var(--low-bg)} .b-지원불가{color:var(--block);background:var(--block-bg)}
 .mini{font-size:11px;color:var(--sub);border:1px solid var(--line);border-radius:999px;padding:1px 7px}
 .mini.warn{color:var(--low);border-color:var(--low)}
-.mini.re{color:var(--pass);border-color:var(--pass)}
+.mini.re{color:var(--accent);border-color:var(--accent)}
 
 /* 본문 */
 .post{padding:24px}
@@ -67,7 +73,7 @@ h2{font-size:15px;margin:0 0 12px}
 .fit h2{font-size:17px}
 .banner{border:1px solid var(--line);background:var(--soft);border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.6;margin-bottom:12px}
 .banner b{color:var(--ink)}
-.banner.re{border-color:var(--pass);background:var(--pass-bg)}
+.banner.re{border-color:var(--accent);background:var(--accent-bg)}
 .tops{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 .top{background:var(--soft);border-radius:14px;padding:14px;text-align:center}
 .top .cap{font-size:12px;color:var(--sub);margin-bottom:8px;text-align:left}
@@ -107,6 +113,7 @@ h2{font-size:15px;margin:0 0 12px}
 <body>
 <div class="wrap">
   <section class="card list">
+    <div class="logo"><i></i>fitcheck</div>
     <h2>공고 분석</h2>
     <div class="input"><input placeholder="공고 URL 또는 내용 붙여넣기" aria-label="공고 입력"><button id="run">분석</button></div>
     <div class="demo">예시: <button id="demoNonIt">비IT 공고 넣어보기</button></div>
