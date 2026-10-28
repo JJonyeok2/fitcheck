@@ -14,6 +14,8 @@ from __future__ import annotations
 from datetime import date
 
 import pytest
+
+from fitcheck.config import EXAMPLE, load_profile
 from fitcheck.nodes.gate import (
     GateDeps,
     check_duplicate_node,
@@ -23,8 +25,6 @@ from fitcheck.nodes.gate import (
     route_after_eligibility,
     route_after_supported,
 )
-
-from fitcheck.config import EXAMPLE, load_profile
 from fitcheck.schemas import (
     ApplicationRecord,
     ApplicationStatus,

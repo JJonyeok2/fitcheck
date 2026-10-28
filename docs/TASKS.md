@@ -123,15 +123,15 @@ T4, T8, T9 ── T17          T15, T16 ── T18 ── T19
 - [x] 이미지 위주 공고에서 `text_is_sufficient=False`
 - [x] localhost, 내부망, file 주소 차단, 입력한 주소 하나만 열기 (`tests/test_normalize.py` 22개, 일부러 넣은 버그 7개 모두 검출)
 
-### T6. 판정 노드 연결 — 파트: 판정
+### T6. 판정 노드 연결 — 파트: 판정 ✅ 완료 (2026-10-28)
 **지시**
 - 이미 구현된 규칙을 노드로 감싼다: `check_supported`, `check_duplicate`, `check_eligibility`.
 - `check_duplicate`는 T3 저장소를 사용. 중복이면 기존 기록에 URL만 추가.
 
 **완료 조건**
-- [ ] 비IT 공고 → 종료, 저장 안 됨
-- [ ] 같은 공고 두 번 → 두 번째는 URL만 추가되고 판정 노드 미실행
-- [ ] 마감 지난 공고 → 지원 불가로 저장, 매칭 노드 미실행
+- [x] 비IT 공고 → 종료, 저장 안 됨
+- [x] 같은 공고 두 번 → 두 번째는 URL만 추가되고 판정 노드 미실행 (같은 원문, 같은 회사와 직무 모두)
+- [x] 마감 지난 공고 → 지원 불가, 분기가 save_record로 (`tests/test_gate.py` 16개, 일부러 넣은 버그 7개 모두 검출)
 
 ### T7. 그래프 골격과 CLI — 파트: 에이전트
 **지시** (설계: [AGENT_DESIGN.md](AGENT_DESIGN.md) 2, 4, 5, 6, 12장)

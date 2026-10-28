@@ -10,9 +10,10 @@
 
 from __future__ import annotations
 
+import operator
 from datetime import date, datetime
 from enum import Enum, StrEnum
-from typing import Literal, TypedDict
+from typing import Annotated, Literal, TypedDict
 
 from pydantic import BaseModel, Field
 
@@ -436,7 +437,17 @@ class ApplicationRecord(BaseModel):
 # ──────────────────────────────────────────────
 
 
+def _union(a: list[str] | None, b: list[str] | None) -> list[str]:
+    """보류 인정 id는 쌓인다 (LangGraph 리듀서)"""
+    return sorted(set(a or []) | set(b or []))
+
+
+EndReason = Literal["input_unreachable", "unsupported", "duplicate", "saved"]
+
+
 class GraphState(TypedDict, total=False):
+    """LangGraph 상태. 필드마다 쓰는 노드는 하나 (AGENT_DESIGN 4.1). 누적 필드만 리듀서를 둔다."""
+
     # 입력
     input_type: InputType
     input_url: str | None
@@ -450,11 +461,16 @@ class GraphState(TypedDict, total=False):
 
     # 파싱
     content_hash: str  # 정규화된 원문 해시. 같은 원문이면 저장된 파싱 결과를 재사용
-    llm_calls: int  # 이 공고에 쓴 LLM 호출 수 (budget.LLMBudget가 관리)
+    llm_calls: Annotated[int, operator.add]  # 노드는 이번에 쓴 횟수만 반환
     posting: JobPosting
-    supported: bool  # IT 직무 여부. False면 그래프 종료
-    unsupported_reason: str
     needs_human_check: list[CriticalField]
+    verify_attempts: int
+
+    # 관문
+    supported_verdict: Literal["supported", "verify", "unsupported"]
+    unsupported_reason: str
+    posting_id: str
+    already_applied: list[ApplicationRecord]  # 같은 회사 다른 포지션 지원 이력
 
     # 필터 / 매칭
     eligibility: EligibilityResult
@@ -463,11 +479,14 @@ class GraphState(TypedDict, total=False):
     gap_report: GapReport
     fit_band: FitBand
     preferences: PreferenceResult
+    gap_summary: str
 
     # 사람 결정 (interrupt)
-    overrides: list[str]
-    decision: Literal["apply", "skip", "hold"]
+    overrides: Annotated[list[str], _union]
+    decision: Literal["apply", "skip", "hold", "override"]
 
-    # 산출물
+    # 산출물, 종료
     resume_draft: str
     application: ApplicationRecord
+    end_reason: EndReason
+    error: str
