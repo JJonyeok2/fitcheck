@@ -239,6 +239,7 @@ T4, T8, T9 ── T17          T15, T16 ── T18 ── T19
 **지시**
 - FastAPI
   - `POST /analyze` (URL 또는 텍스트 또는 이미지 업로드) → `thread_id`, 진행 상태
+  - `GET /analyze/{thread_id}`: 지금 단계(`step`: parse, eligibility, match, summarize, done, error)와 경과 초. 화면이 폴링해서 스켈레톤 위 단계 문구에 쓴다. 노드가 끝날 때마다 단계를 갱신 (LangGraph 스트림)
   - `GET /postings`, `GET /postings/{id}`
   - `POST /postings/{id}/override`, `POST /postings/{id}/decision`, `POST /postings/{id}/verify`
   - `PATCH /records/{id}/status`
@@ -247,6 +248,7 @@ T4, T8, T9 ── T17          T15, T16 ── T18 ── T19
 **완료 조건**
 - [ ] 엔드포인트별 테스트 (FakeLLM)
 - [ ] 이미지가 아닌 파일 업로드 거부 테스트
+- [ ] 분석 중 단계가 parse → eligibility → match → summarize → done 순서로 바뀌는 테스트
 
 ### T15. 공고 진단 화면 — 파트: 화면
 **지시**
@@ -254,11 +256,12 @@ T4, T8, T9 ── T17          T15, T16 ── T18 ── T19
 - 화면 모드 라이트 / 다크 / 시스템(기본) 전환, 선택 저장, 그리기 전 적용 (Spec 6장).
 - 입력창, 공고 목록(정렬, 라벨 필터, D-day, 재판정 필요), 공고 본문, FIT 진단 패널(조건 칩, 보류 인정, 요건 칩과 근거 태그, 선호 조건, 보완 포인트, 결정 버튼).
 - 공고 원문은 반드시 이스케이프해서 표시 (`dangerouslySetInnerHTML` 금지).
-- 분석 진행 중 단계 표시 (파싱 중, 판정 중 등).
+- 분석 중에는 FIT 진단 패널 자리에 스켈레톤과 "분석 중이에요", 지금 단계 한 줄 (Spec 6장 분석 중 화면). 30초가 지나면 "조금 더 걸리고 있어요".
 
 **완료 조건**
 - [ ] ESLint 통과
 - [ ] Playwright E2E: 공고 입력 → 라벨 표시 → 보류 인정 → 라벨 변경 → 지원 결정
+- [ ] Playwright E2E: 분석 중 스켈레톤과 단계 문구가 보이고, 결과가 오면 사라짐. 실패하면 이유와 다시 시도 버튼
 - [ ] 390px 폭에서 가로 스크롤 없음
 - [ ] Playwright E2E: 다크 선택 → 새로고침 후 유지, 시스템 선택 시 운영체제 설정 따름
 
@@ -271,7 +274,7 @@ T4, T8, T9 ── T17          T15, T16 ── T18 ── T19
 
 ### T17. 평가 실행 — 파트: 평가
 **지시**
-- `scripts/evaluate.py`: 정답셋 20개를 돌려 파싱 핵심 필드 일치율, 자격 필터 정확도(지원 가능한데 지원 불가로 버린 건수), 라벨 일치율, 공고당 LLM 호출 수와 비용을 표로 출력하고 `eval/report.md`로 저장.
+- `scripts/evaluate.py`: 정답셋 20개를 돌려 파싱 핵심 필드 일치율, 자격 필터 정확도(지원 가능한데 지원 불가로 버린 건수), 라벨 일치율, 공고당 LLM 호출 수와 비용, **공고당 응답 시간(목표 30초 이내)**, **놓친 공고 수**(도입 전 감으로 불합격권 → fitcheck 안정권 이상, 근거 포함)를 표로 출력하고 `eval/report.md`로 저장.
 
 **완료 조건**
 - [ ] Spec 10장 목표 대비 결과 기록
