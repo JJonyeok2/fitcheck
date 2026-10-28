@@ -125,7 +125,7 @@ html{color-scheme:light dark}
     <div class="top-row">
       <div class="logo"><i></i>fitcheck</div>
       <div class="theme" role="group" aria-label="화면 모드">
-        <button data-theme-set="system">시스템</button><button data-theme-set="light">라이트</button><button data-theme-set="dark">다크</button>
+        <button data-theme-set="light">라이트</button><button data-theme-set="dark">다크</button><button data-theme-set="system">시스템</button>
       </div>
     </div>
     <h2>공고 분석</h2>
@@ -277,7 +277,7 @@ function render(){
     <div class="disc">라벨은 합격 확률이 아니라 공고 요건과의 적합도입니다. 요건 칩 옆 태그는 근거 프로젝트예요.</div>`;
 }
 
-/* 화면 모드: 시스템 / 라이트 / 다크. 선택은 이 브라우저에만 저장 */
+/* 화면 모드: 라이트 / 다크 / 시스템(기본). 선택은 이 브라우저에만 저장 */
 const THEME_KEY="fitcheck-theme";
 function applyTheme(mode){
   if(mode==="light"||mode==="dark") document.documentElement.setAttribute("data-theme",mode);
