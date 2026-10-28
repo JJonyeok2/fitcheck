@@ -133,7 +133,7 @@ T4, T8, T9 ── T17          T15, T16 ── T18 ── T19
 - [x] 같은 공고 두 번 → 두 번째는 URL만 추가되고 판정 노드 미실행 (같은 원문, 같은 회사와 직무 모두)
 - [x] 마감 지난 공고 → 지원 불가, 분기가 save_record로 (`tests/test_gate.py` 16개, 일부러 넣은 버그 7개 모두 검출)
 
-### T7. 그래프 골격과 CLI — 파트: 에이전트
+### T7. 그래프 골격과 CLI — 파트: 에이전트 ✅ 완료 (2026-10-28)
 **지시** (설계: [AGENT_DESIGN.md](AGENT_DESIGN.md) 2, 4, 5, 6, 12장)
 - `fitcheck/graph.py`: LangGraph `StateGraph`. Spec 4.3의 노드 순서와 조건부 엣지. 아직 없는 노드(이미지, 매칭 등)는 통과만 하는 자리표시자.
 - SQLite 체크포인터, 공고마다 `thread_id`.
@@ -141,9 +141,11 @@ T4, T8, T9 ── T17          T15, T16 ── T18 ── T19
 - CLI: `fitcheck analyze <url|파일>`, `fitcheck resume <thread_id> --decision apply|skip|hold`, `fitcheck override <thread_id> <조건 id>`.
 
 **완료 조건**
-- [ ] 텍스트 공고 한 건이 입력부터 `decide` 대기까지 진행 (FakeLLM)
-- [ ] 프로세스를 끈 뒤 `resume`으로 이어서 진행
-- [ ] 보류 조건 `override` → 자격 필터부터 다시 판정되어 라벨이 바뀌는 테스트
+- [x] 텍스트 공고 한 건이 입력부터 `decide` 대기까지 진행 (FakeLLM)
+- [x] 프로세스를 끈 뒤 `resume`으로 이어서 진행
+- [x] 보류 조건 `override` → 자격 필터부터 다시 판정되어 라벨이 바뀌는 테스트
+- [x] 비IT, 중복, 지원 불가, 사람 확인, 짧은 입력, CLI 경로 (`tests/test_graph.py` 12개, 일부러 넣은 버그 6개 모두 검출)
+- 설계와 다른 점: 파싱 재시도까지 실패하면 사람 확인 대신 안내 후 종료 (고칠 공고 값이 없음). 붙여넣기 다시 하기로 해결
 
 **M1 끝**: 텍스트 공고를 CLI에 넣으면 라벨과 조건별 판정이 나오고, 결정을 기다린다.
 

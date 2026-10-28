@@ -161,6 +161,9 @@ class UsageLedger:
         self.db.execute("INSERT INTO usage VALUES (?,?,?,?,?,?,?,?)", (datetime.now().isoformat(), *row))
         self.db.commit()
 
+    def close(self) -> None:
+        self.db.close()
+
     def total_usd(self) -> float:
         return float(self.db.execute("SELECT COALESCE(SUM(cost_usd), 0) FROM usage").fetchone()[0])
 

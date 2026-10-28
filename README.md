@@ -86,6 +86,23 @@ cp .env.example .env
 
 `competencies.local.yaml`과 `.env`는 Git에 올라가지 않고, 실수로 `git add -f` 해도 커밋 단계에서 막힙니다. 줄바꿈은 `.gitattributes`로 LF로 고정되어 있어서 윈도우에서도 형식 검사 결과가 같습니다.
 
+## 사용법 (터미널)
+
+```powershell
+# 공고 분석 (붙여넣은 공고를 파일로 저장해서)
+uv run fitcheck analyze --file 공고.txt
+# 공고 주소로
+uv run fitcheck analyze --url https://www.wanted.co.kr/wd/000000
+
+# 지원 결정에서 멈추면 thread 번호가 나온다
+uv run fitcheck resume <thread> --decision apply      # 지원, hold 보류, skip 미지원
+uv run fitcheck resume <thread> --override "자격증:정보처리기사"   # 보류 조건 인정 후 재판정
+uv run fitcheck resume <thread> --fix location="서울 강남구"      # 불확실한 항목 고치기
+uv run fitcheck show <thread>
+```
+
+실제 공고를 분석하려면 `.env`에서 `FIT_LLM=openai`로 바꿔야 한다. `fake`면 LLM을 부르지 않는다.
+
 ## 기술 스택
 
 Python 3.12, uv, Pydantic, LangGraph, FastAPI, SQLite, Playwright, Next.js 16, TypeScript (자세한 버전과 고른 이유는 [Spec 11장](docs/SPEC.md))

@@ -139,6 +139,14 @@ class Store:
             )
         return pid
 
+    def update_posting(self, posting_id: str, posting: JobPosting) -> None:
+        """사람이 고친 값으로 공고를 바꾼다 (원문 해시와 출처 URL은 그대로)"""
+        with self.db:
+            self.db.execute(
+                "UPDATE postings SET posting_json = ?, dedup_key = ? WHERE id = ?",
+                (posting.model_dump_json(), dedup_key(posting.company, posting.title), posting_id),
+            )
+
     def get_posting(self, posting_id: str) -> JobPosting | None:
         row = self.db.execute("SELECT posting_json FROM postings WHERE id = ?", (posting_id,)).fetchone()
         return JobPosting.model_validate_json(row[0]) if row else None

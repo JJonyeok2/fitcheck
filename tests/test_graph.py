@@ -12,13 +12,14 @@ TASKS.md T7, AGENT_DESIGN 2, 5, 6, 11장 (경로 테스트)
 
 from __future__ import annotations
 
+import contextlib
 from datetime import date
 
 import pytest
-from fitcheck.graph import GraphDeps, build_graph, pending_interrupt
 
 from fitcheck import cli
 from fitcheck.config import EXAMPLE, load_profile
+from fitcheck.graph import GraphDeps, build_graph, pending_interrupt
 from fitcheck.llm import FakeLLM, UsageLedger
 from fitcheck.schemas import ApplicationStatus
 from fitcheck.store import Store
@@ -60,6 +61,18 @@ def extraction(**over):
     return base
 
 
+_OPENED: list = []
+
+
+@pytest.fixture(autouse=True)
+def _close_connections():
+    """Windows는 열린 DB 파일을 지우지 못한다. 테스트가 끝나면 그래프, 저장소, 사용량 기록 연결을 모두 닫는다."""
+    yield
+    while _OPENED:
+        with contextlib.suppress(Exception):
+            _OPENED.pop().close()
+
+
 @pytest.fixture
 def data_dir(tmp_path):
     return tmp_path
@@ -67,6 +80,7 @@ def data_dir(tmp_path):
 
 def make(data_dir, responses=(), today=TODAY):
     ledger = UsageLedger(data_dir / "usage.sqlite")
+    _OPENED.append(ledger)
     deps = GraphDeps(
         store=Store(data_dir / "fitcheck.sqlite"),
         me=ME,
@@ -74,7 +88,9 @@ def make(data_dir, responses=(), today=TODAY):
         today=today,
         checkpoint_path=data_dir / "checkpoints.sqlite",
     )
-    return build_graph(deps), deps
+    graph = build_graph(deps)
+    _OPENED.extend([deps.store, graph])
+    return graph, deps
 
 
 def start(graph, thread, text=TEXT):

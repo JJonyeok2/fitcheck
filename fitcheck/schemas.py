@@ -442,7 +442,7 @@ def _union(a: list[str] | None, b: list[str] | None) -> list[str]:
     return sorted(set(a or []) | set(b or []))
 
 
-EndReason = Literal["input_unreachable", "unsupported", "duplicate", "saved"]
+EndReason = Literal["input_unreachable", "parse_failed", "image_not_supported_yet", "unsupported", "duplicate", "saved"]
 
 
 class GraphState(TypedDict, total=False):
