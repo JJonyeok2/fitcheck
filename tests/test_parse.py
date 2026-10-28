@@ -11,11 +11,11 @@ TASKS.md T4, AGENT_DESIGN 7장, DESIGN_DECISIONS D1, D2
 from __future__ import annotations
 
 import pytest
-from fitcheck.nodes import parse as parse_mod
-from fitcheck.nodes.parse import PROMPT_VERSION, parse_posting
 
 from fitcheck.budget import BudgetExceeded, LLMBudget, ParseCache
 from fitcheck.llm import FakeLLM, UsageLedger
+from fitcheck.nodes import parse as parse_mod
+from fitcheck.nodes.parse import PROMPT_VERSION, parse_posting
 from fitcheck.schemas import IT_CATEGORIES, CriticalField
 
 TEXT = """(주)샘플랩스 AX 프로덕트 엔지니어 채용
