@@ -14,7 +14,6 @@ from datetime import date, datetime
 from pathlib import Path
 
 import pytest
-from fitcheck.store import DEFAULT_DB, MIGRATIONS, Store
 
 from fitcheck.schemas import (
     ApplicationRecord,
@@ -23,6 +22,7 @@ from fitcheck.schemas import (
     JobPosting,
     StatusChange,
 )
+from fitcheck.store import DEFAULT_DB, MIGRATIONS, Store
 from fitcheck.tracking import dedup_key
 
 ROOT = Path(__file__).resolve().parent.parent
