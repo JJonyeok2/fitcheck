@@ -54,8 +54,16 @@ def _items(matches: list[RequirementMatch]) -> list[ScoreItem]:
         if m.requirement.category in EXCLUDED_CATEGORIES:
             continue
         label, c = credit_of(m)
-        out.append(ScoreItem(text=m.requirement.text, is_required=m.is_required, weight=weight_of(m),
-                             credit=c, strength=label, evidence_project_ids=m.evidence_project_ids))
+        out.append(
+            ScoreItem(
+                text=m.requirement.text,
+                is_required=m.is_required,
+                weight=weight_of(m),
+                credit=c,
+                strength=label,
+                evidence_project_ids=m.evidence_project_ids,
+            )
+        )
     return out
 
 

@@ -2,18 +2,46 @@
 name = "fitcheck"
 version = "0.1.0"
 description = "IT 직무 채용공고 적합도 진단과 지원 관리 에이전트"
-requires-python = ">=3.11"
+readme = "README.md"
+requires-python = ">=3.12"
 dependencies = [
-    "pydantic>=2.6",
-    "pyyaml>=6.0",
+    "pydantic>=2.14,<3",
+    "pyyaml>=6.0,<7",
 ]
 
-[project.optional-dependencies]
-dev = ["pytest>=8.0"]
+[dependency-groups]
+dev = [
+    "pytest>=9.2,<10",
+    "ruff>=0.17.3,<0.18",
+    "pre-commit>=4.0,<5",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["fitcheck"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
 
-[tool.setuptools]
-packages = ["fitcheck"]
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["docs"]
+
+[tool.ruff.lint]
+# E/W 스타일, F 오류, I import 순서, UP 최신 문법, B 흔한 버그, SIM 단순화
+select = ["E", "W", "F", "I", "UP", "B", "SIM"]
+ignore = [
+    "E501",   # 긴 줄은 formatter에 맡긴다 (한글 설명 문자열)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# 테스트는 스키마 전체를 * import 하고, 짧은 한 줄 테스트를 허용한다
+"tests/*" = ["F403", "F405", "E701", "E702"]
+
+[tool.ruff.format]
+quote-style = "double"

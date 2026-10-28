@@ -30,8 +30,13 @@ def merge_duplicate(existing: ApplicationRecord, new_url: str | None) -> Applica
 def already_applied_to(company: str, records: list[ApplicationRecord]) -> list[ApplicationRecord]:
     """같은 회사에 이전 지원 기록이 있는지 (포지션이 달라도). 재지원 판단용."""
     key = _SPACES.sub("", _COMPANY_NOISE.sub("", company)).lower()
-    done = {ApplicationStatus.applied, ApplicationStatus.document_passed, ApplicationStatus.interview,
-            ApplicationStatus.offer, ApplicationStatus.rejected}
+    done = {
+        ApplicationStatus.applied,
+        ApplicationStatus.document_passed,
+        ApplicationStatus.interview,
+        ApplicationStatus.offer,
+        ApplicationStatus.rejected,
+    }
     return [r for r in records if r.dedup_key.split("::")[0] == key and r.status in done]
 
 
@@ -39,7 +44,8 @@ def competency_fingerprint(me: UserConstraints, db: CompetencyDB) -> str:
     """판정에 영향을 주는 내 정보의 지문. 자격증 취득, 프로젝트 추가 등으로 바뀌면 값이 달라진다."""
     payload = json.dumps(
         {"me": me.model_dump(mode="json"), "db": db.model_dump(mode="json")},
-        ensure_ascii=False, sort_keys=True,
+        ensure_ascii=False,
+        sort_keys=True,
     )
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
 

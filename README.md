@@ -41,18 +41,25 @@ eval/             정답셋, 시간 측정 템플릿
 docs/             Spec, 화면 목업
 ```
 
-## 실행
+## 개발 환경
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-pytest
+# 1. 의존성 (uv.lock 그대로)
+uv sync --group dev
+
+# 2. 커밋 전 검사 (비밀 값, 개인 파일, 코드 스타일)
+brew install gitleaks          # macOS. 다른 OS는 gitleaks 릴리스 페이지에서 설치
+uv run pre-commit install
+
+# 3. 테스트 (실제 LLM API를 부르지 않음)
+FIT_LLM=fake uv run pytest
 ```
 
-내 정보로 쓰려면 예시 파일을 복사해서 고칩니다. `competencies.local.yaml`은 Git에 올라가지 않습니다.
+내 정보로 쓰려면 예시 파일을 복사해서 고칩니다. `competencies.local.yaml`과 `.env`는 Git에 올라가지 않고, 실수로 `git add -f` 해도 커밋 단계에서 막힙니다.
 
 ```bash
 cp competencies.example.yaml competencies.local.yaml
+cp .env.example .env           # OPENAI_API_KEY 입력
 ```
 
 ## 기술 스택

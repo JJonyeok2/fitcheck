@@ -1,0 +1,15 @@
+# gitleaks 기본 규칙에 OpenAI 키 규칙을 더한다
+title = "fitcheck gitleaks config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "openai-api-key-any"
+description = "OpenAI API key (sk-, sk-proj-, sk-svcacct-, sk-admin-)"
+regex = '''\bsk-(?:proj-|svcacct-|admin-)?[A-Za-z0-9_-]{32,}'''
+keywords = ["sk-"]
+
+# 저장소 위생 테스트는 '거부되는지' 확인하려고 일부러 가짜 키를 담고 있다
+[allowlist]
+paths = ['''tests/test_repo_hygiene\.py''']

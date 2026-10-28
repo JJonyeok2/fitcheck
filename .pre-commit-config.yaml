@@ -1,0 +1,30 @@
+# 커밋 전 검사. 설치: uv run pre-commit install
+repos:
+  # 비밀 값 (API 키, 토큰) 검사. gitleaks 실행 파일이 필요하다 (macOS: brew install gitleaks)
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks-system
+        name: gitleaks (비밀 값 검사)
+        # 원래 훅 정의에 pass_filenames: false가 빠져 있어서, 파일 이름이 저장소 경로 자리에 넘어가
+        # 아무것도 검사하지 않고 통과한다. 직접 막고 설정 파일도 명시한다.
+        pass_filenames: false
+        entry: gitleaks git --pre-commit --staged --redact --verbose --config .gitleaks.toml
+
+  # 올라가면 안 되는 개인 파일 차단 (.gitignore를 git add -f로 우회해도 막는다)
+  - repo: local
+    hooks:
+      - id: block-private-files
+        name: 개인 파일 커밋 차단 (.env, competencies.local.yaml, data/)
+        language: fail
+        entry: "이 파일은 커밋하면 안 됩니다. git reset HEAD <파일>로 스테이징을 취소하세요"
+        files: '(^|/)(\.env(\..+)?|competencies\.local\.yaml|data/.*)$'
+        exclude: '(^|/)\.env\.example$'
+
+  # 코드 스타일
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.3
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format

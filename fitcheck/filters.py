@@ -15,17 +15,17 @@ from datetime import date
 from .schemas import (
     BAND_ORDER,
     DEGREE_ORDER,
+    IT_CATEGORIES,
     PROFICIENCY_ORDER,
-    FitBand,
     ConditionCheck,
     CriticalField,
-    LanguageReq,
-    TestScore,
     EducationTier,
     EligibilityResult,
-    IT_CATEGORIES,
+    FitBand,
     GapReport,
     JobPosting,
+    LanguageReq,
+    TestScore,
     UserConstraints,
 )
 
@@ -68,8 +68,7 @@ def check_eligibility(
         if left < 0:
             add("마감", f"{posting.deadline:%m/%d} 마감", "fail", "마감된 공고")
         else:
-            add("마감", f"D-{left}" if left else "오늘 마감", "pass",
-                "마감 임박" if left <= DEADLINE_SOON_DAYS else "")
+            add("마감", f"D-{left}" if left else "오늘 마감", "pass", "마감 임박" if left <= DEADLINE_SOON_DAYS else "")
     elif posting.rolling_deadline:
         add("마감", "채용시 마감", "pass", "언제든 닫힐 수 있음")
 
@@ -86,7 +85,9 @@ def check_eligibility(
 
     # 학력
     edu = posting.education
-    edu_label = "학력 무관" if edu.min_degree == "무관" else f"{edu.min_degree} 이상" + (" 우대" if edu.preferred_only else "")
+    edu_label = (
+        "학력 무관" if edu.min_degree == "무관" else f"{edu.min_degree} 이상" + (" 우대" if edu.preferred_only else "")
+    )
     if not edu.preferred_only and DEGREE_ORDER[edu.min_degree] > DEGREE_ORDER[me.degree]:
         add("학력", edu_label, "fail", f"내 학력 {me.degree}")
     else:
@@ -114,8 +115,12 @@ def check_eligibility(
         else:
             years = (today - me.graduation_date).days / 365.25
             ok = years <= grad.max_years_since
-            add("졸업", f"졸업 후 {grad.max_years_since}년 이내", "pass" if ok else "fail",
-                "" if ok else f"졸업 후 {years:.1f}년")
+            add(
+                "졸업",
+                f"졸업 후 {grad.max_years_since}년 이내",
+                "pass" if ok else "fail",
+                "" if ok else f"졸업 후 {years:.1f}년",
+            )
 
     # 병역
     if posting.military == "군필 또는 면제":
@@ -131,8 +136,12 @@ def check_eligibility(
             add("자격증", names, "pass")
         elif pending:
             if pending.expected_date and posting.deadline and pending.expected_date > posting.deadline:
-                add("자격증", names, "fail",
-                    f"합격 발표 {pending.expected_date:%m/%d}가 마감 {posting.deadline:%m/%d}보다 늦음")
+                add(
+                    "자격증",
+                    names,
+                    "fail",
+                    f"합격 발표 {pending.expected_date:%m/%d}가 마감 {posting.deadline:%m/%d}보다 늦음",
+                )
             elif pending.expected_date and posting.deadline:
                 add("자격증", names, "hold", f"합격 발표 {pending.expected_date:%m/%d}, 마감 전 — 합격하면 충족")
             else:
@@ -195,7 +204,20 @@ def _language_label(lang: LanguageReq) -> str:
 
 # 시 이름 없이 동네나 업무지구로만 표기되는 경우를 위한 별칭
 REGION_ALIASES: dict[str, list[str]] = {
-    "서울": ["서울", "강남", "마곡", "여의도", "성수", "을지로", "구로디지털", "가산디지털", "상암", "잠실", "종로", "광화문"],
+    "서울": [
+        "서울",
+        "강남",
+        "마곡",
+        "여의도",
+        "성수",
+        "을지로",
+        "구로디지털",
+        "가산디지털",
+        "상암",
+        "잠실",
+        "종로",
+        "광화문",
+    ],
     "성남": ["성남", "판교", "분당", "정자", "수내", "서현", "위례"],
     "안양": ["안양", "평촌", "범계", "인덕원"],
     "과천": ["과천", "과천지식정보타운"],
@@ -223,9 +245,9 @@ def _meets_test(required: TestScore, mine: TestScore) -> bool:
     if required.grade is not None:
         order = GRADE_ORDER.get(required.test)
         if not order or mine.grade not in order or required.grade not in order:
-            return False   # 서열을 모르는 등급은 충족으로 치지 않음
+            return False  # 서열을 모르는 등급은 충족으로 치지 않음
         return order.index(mine.grade) >= order.index(required.grade)
-    return True            # 점수 기준 없이 '성적 보유'만 요구
+    return True  # 점수 기준 없이 '성적 보유'만 요구
 
 
 def _check_language(lang: LanguageReq, me: UserConstraints) -> tuple[str, str]:
@@ -270,29 +292,27 @@ def education_tier(posting: JobPosting, me: UserConstraints) -> EducationTier:
         return EducationTier.DISADVANTAGED if req > mine else EducationTier.OPEN
 
     if req == mine:
-        return EducationTier.DEGREE_MATCH   # '학사 이상', '대졸' → 1순위
-    return EducationTier.OPEN               # 무관, 고졸, 전문학사 이상
+        return EducationTier.DEGREE_MATCH  # '학사 이상', '대졸' → 1순위
+    return EducationTier.OPEN  # 무관, 고졸, 전문학사 이상
 
 
-PASS_COVERAGE = 0.8     # 합격권 최소 적합도 점수 (이상)
-STABLE_COVERAGE = 0.5   # 안정권 최소 적합도 점수 (초과). 이하이면 불합격권
+PASS_COVERAGE = 0.8  # 합격권 최소 적합도 점수 (이상)
+STABLE_COVERAGE = 0.5  # 안정권 최소 적합도 점수 (초과). 이하이면 불합격권
 
 
-def fit_band(
-    eligibility: EligibilityResult, tier: EducationTier, gap: GapReport | None
-) -> FitBand:
+def fit_band(eligibility: EligibilityResult, tier: EducationTier, gap: GapReport | None) -> FitBand:
     if eligibility.status == "ineligible":
         return FitBand.BLOCKED
     if eligibility.status == "ambiguous":
         return FitBand.LOW
     coverage = gap.fit_score if gap else None
     if coverage is None:
-        return FitBand.STABLE   # 계산할 요건이 없어 검증 불가 → 안정권까지만
+        return FitBand.STABLE  # 계산할 요건이 없어 검증 불가 → 안정권까지만
     if coverage <= STABLE_COVERAGE:
         return FitBand.LOW
     if coverage >= PASS_COVERAGE and tier in (EducationTier.DEGREE_MATCH, EducationTier.OPEN):
         return FitBand.PASS
-    return FitBand.STABLE   # 석사 우대처럼 학력에서 불리하면 충족률이 높아도 안정권까지
+    return FitBand.STABLE  # 석사 우대처럼 학력에서 불리하면 충족률이 높아도 안정권까지
 
 
 def sort_key(band: FitBand, tier: EducationTier, gap: GapReport | None) -> tuple[int, int, float]:

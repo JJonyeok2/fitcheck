@@ -97,15 +97,15 @@ def test_ci_never_calls_real_llm():
 def test_precommit_config_has_gitleaks_and_file_guard():
     cfg = yaml.safe_load((ROOT / ".pre-commit-config.yaml").read_text(encoding="utf-8"))
     hook_ids = {h["id"] for repo in cfg["repos"] for h in repo["hooks"]}
-    assert "gitleaks" in hook_ids
+    assert "gitleaks-system" in hook_ids
     assert "block-private-files" in hook_ids
 
 
 @pytest.fixture
 def sandbox_repo(tmp_path: Path) -> Path:
     """현재 훅 설정을 복사한 임시 저장소. 실제 저장소에는 아무것도 커밋하지 않는다."""
-    if shutil.which("pre-commit") is None:
-        pytest.skip("pre-commit이 설치되지 않음")
+    if shutil.which("pre-commit") is None or shutil.which("gitleaks") is None:
+        pytest.skip("pre-commit 또는 gitleaks가 설치되지 않음 (README 개발 환경 참고)")
     for name in (".pre-commit-config.yaml", ".gitleaks.toml"):
         if (ROOT / name).exists():
             shutil.copy(ROOT / name, tmp_path / name)
@@ -136,17 +136,23 @@ FAKE_OPENAI_KEY = "sk-proj-" + "Ab3dE6gH9jK2mN5pQ8sT1vW4yZ7bC0eF3hJ6kL9nP2rS5uX8
 
 def test_commit_with_fake_api_key_is_rejected(sandbox_repo: Path):
     r = _try_commit(sandbox_repo, "config.py", f'OPENAI_API_KEY = "{FAKE_OPENAI_KEY}"\n')
-    assert r.returncode != 0, "가짜 키가 들어간 커밋은 거부되어야 한다\n" + r.stdout
+    out = r.stdout + r.stderr
+    assert r.returncode != 0, "가짜 키가 들어간 커밋은 거부되어야 한다\n" + out
+    assert "leaks found" in out.lower(), "다른 이유가 아니라 gitleaks가 막아야 한다\n" + out
 
 
 def test_commit_of_env_file_is_rejected(sandbox_repo: Path):
     r = _try_commit(sandbox_repo, ".env", "FIT_LLM=fake\n", force=True)
-    assert r.returncode != 0, ".env는 강제로 add해도 커밋이 거부되어야 한다\n" + r.stdout
+    out = r.stdout + r.stderr
+    assert r.returncode != 0, ".env는 강제로 add해도 커밋이 거부되어야 한다\n" + out
+    assert "개인 파일 커밋 차단" in out and "Failed" in out, "개인 파일 차단 훅이 막아야 한다\n" + out
 
 
 def test_commit_of_local_profile_is_rejected(sandbox_repo: Path):
     r = _try_commit(sandbox_repo, "competencies.local.yaml", "constraints: {}\n", force=True)
-    assert r.returncode != 0, "내 실제 역량 파일은 커밋이 거부되어야 한다\n" + r.stdout
+    out = r.stdout + r.stderr
+    assert r.returncode != 0, "내 실제 역량 파일은 커밋이 거부되어야 한다\n" + out
+    assert "개인 파일 커밋 차단" in out and "Failed" in out, "개인 파일 차단 훅이 막아야 한다\n" + out
 
 
 def test_normal_commit_is_allowed(sandbox_repo: Path):
