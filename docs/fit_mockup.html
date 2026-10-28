@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>공고 FIT 진단</title>
+<script>/* 그리기 전에 저장된 모드를 적용해 깜빡임 방지 */try{var m=localStorage.getItem("fitcheck-theme");if(m==="light"||m==="dark")document.documentElement.setAttribute("data-theme",m)}catch(e){}</script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -36,6 +37,14 @@ h2{font-size:15px;margin:0 0 12px}
 .input input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
 .logo{display:flex;align-items:center;gap:8px;font-size:20px;font-weight:800;letter-spacing:-.5px;margin-bottom:14px}
 .logo i{width:12px;height:12px;border-radius:3px;background:var(--accent)}
+.top-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px}
+.top-row .logo{margin-bottom:0}
+.theme{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px;background:var(--soft)}
+.theme button{border:0;background:none;color:var(--sub);font-size:11.5px;padding:4px 9px;border-radius:999px;cursor:pointer}
+.theme button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08);font-weight:700}
+html{color-scheme:light dark}
+:root[data-theme="light"]{color-scheme:light}
+:root[data-theme="dark"]{color-scheme:dark}
 .input button{border:0;background:var(--brand);color:var(--card);border-radius:10px;padding:0 12px;cursor:pointer;font-weight:700}
 .demo{font-size:12px;color:var(--sub);margin-bottom:12px}
 .demo button{border:0;background:none;color:var(--accent);cursor:pointer;padding:0;text-decoration:underline}
@@ -113,7 +122,12 @@ h2{font-size:15px;margin:0 0 12px}
 <body>
 <div class="wrap">
   <section class="card list">
-    <div class="logo"><i></i>fitcheck</div>
+    <div class="top-row">
+      <div class="logo"><i></i>fitcheck</div>
+      <div class="theme" role="group" aria-label="화면 모드">
+        <button data-theme-set="system">시스템</button><button data-theme-set="light">라이트</button><button data-theme-set="dark">다크</button>
+      </div>
+    </div>
     <h2>공고 분석</h2>
     <div class="input"><input placeholder="공고 URL 또는 내용 붙여넣기" aria-label="공고 입력"><button id="run">분석</button></div>
     <div class="demo">예시: <button id="demoNonIt">비IT 공고 넣어보기</button></div>
@@ -263,8 +277,19 @@ function render(){
     <div class="disc">라벨은 합격 확률이 아니라 공고 요건과의 적합도입니다. 요건 칩 옆 태그는 근거 프로젝트예요.</div>`;
 }
 
+/* 화면 모드: 시스템 / 라이트 / 다크. 선택은 이 브라우저에만 저장 */
+const THEME_KEY="fitcheck-theme";
+function applyTheme(mode){
+  if(mode==="light"||mode==="dark") document.documentElement.setAttribute("data-theme",mode);
+  else document.documentElement.removeAttribute("data-theme");
+  document.querySelectorAll("[data-theme-set]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.themeSet===mode)));
+}
+function savedTheme(){try{return localStorage.getItem(THEME_KEY)||"system"}catch(e){return "system"}}
+function setTheme(mode){try{localStorage.setItem(THEME_KEY,mode)}catch(e){} applyTheme(mode)}
+
 function toast(html){const t=document.getElementById("toast");t.innerHTML=html;t.classList.add("on")}
 document.addEventListener("click",e=>{
+  const th=e.target.closest("[data-theme-set]"); if(th){setTheme(th.dataset.themeSet);return}
   const o=e.target.closest("[data-ov]");
   if(o){const s=ov(P[cur]);s.add(o.dataset.ov);render();return}
   const b=e.target.closest("[data-b]"); if(b){filter=b.dataset.b;render();return}
@@ -273,6 +298,7 @@ document.addEventListener("click",e=>{
   if(e.target.id==="run"){toast("목업에서는 분석이 실행되지 않아요. 실제 화면에서는 이 자리에 진행 단계가 표시됩니다.")}
 });
 render();
+applyTheme(savedTheme());
 </script>
 </body>
 </html>
