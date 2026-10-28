@@ -89,3 +89,13 @@ def test_cli(eval_dir, monkeypatch, capsys):
     assert timelog.main(["stop", "--memo", "중간에 전화"]) == 0
     assert rows(eval_dir)[0]["memo"] == "중간에 전화"
     assert "t03" in capsys.readouterr().out
+
+
+def test_append_after_hand_edit_without_final_newline(eval_dir):
+    """메모장으로 마지막 줄을 지우면 머리글 끝 줄바꿈까지 사라질 수 있다. 그래도 새 줄은 따로 들어가야 한다"""
+    header = ",".join(timelog.FIELDS)
+    (eval_dir / "time_log.csv").write_text(header, encoding="utf-8")  # 줄바꿈 없음
+    timelog.start("t01", eval_dir=eval_dir, now=T0)
+    timelog.stop(eval_dir=eval_dir, now=T0.replace(minute=45))
+    r = rows(eval_dir)
+    assert len(r) == 1 and r[0]["posting_id"] == "t01" and r[0]["memo"] == "설계 참여 후 측정"

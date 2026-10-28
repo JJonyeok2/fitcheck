@@ -58,6 +58,13 @@ def _done(d: Path, posting_id: str, phase: str) -> bool:
         return any(r["posting_id"] == posting_id and r["phase"] == phase for r in csv.DictReader(f))
 
 
+def _ensure_final_newline(p: Path) -> None:
+    """메모장으로 줄을 지우면 마지막 줄바꿈이 사라질 수 있다. 그대로 덧붙이면 두 줄이 한 줄로 붙는다"""
+    if p.exists() and p.stat().st_size and not p.read_bytes().endswith(b"\n"):
+        with open(p, "ab") as f:
+            f.write(b"\r\n")
+
+
 def start(posting_id: str, *, phase: str = "before", eval_dir=None, now: datetime | None = None) -> str:
     d = _dir(eval_dir)
     run = _running(d)
@@ -82,6 +89,7 @@ def stop(*, memo: str = DEFAULT_MEMO, eval_dir=None, now: datetime | None = None
     ended = (now or datetime.now()).replace(microsecond=0)
     minutes = round((ended - began).total_seconds() / 60, 1)
     new = not _log(d).exists()
+    _ensure_final_newline(_log(d))
     with open(_log(d), "a", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=FIELDS)
         if new:
