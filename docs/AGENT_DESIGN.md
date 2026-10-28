@@ -109,7 +109,7 @@ flowchart TD
 | `eligibility` | `check_eligibility` | `score`, `decide`, 분기 | |
 | `matches` | `match_requirements` | `score`, `draft_resume` | |
 | `gap_report`, `education_tier`, `fit_band`, `preferences` | `score` | `summarize_gap`, `decide`, `save_record` | |
-| `gap_summary` | `summarize_gap` | `decide` | **추가 필요** (현재 `GapReport.summary`와 통합 검토) |
+| `gap_summary` | `summarize_gap` | `decide` | 추가됨 (T10). `GapReport.summary`는 쓰지 않는다 |
 | `overrides` | `decide`(사람 입력) | `check_eligibility` | 누적 (리듀서: 합집합) |
 | `decision` | `decide` | 분기, `save_record` | |
 | `resume_draft` | `draft_resume` | `save_record` | |
@@ -253,7 +253,7 @@ def route_after_decide(s) -> Literal["check_eligibility", "draft_resume", "save_
 
 **코드가 LLM 출력을 다시 검사하는 항목**
 - `match_requirements`: `evidence_ids`가 후보 목록에 없으면 "없음"으로 강등. 팀 프로젝트에서 본인 역할에 없는 기술은 "팀에서 담당"까지, 역량 DB에서 "조금 만져봄"인 기술은 0.3까지로 상한
-- `summarize_gap`: 출력에 나온 숫자가 입력 숫자 집합에 없으면 문장 폐기 후 코드가 만든 기본 문장 사용
+- `summarize_gap`: 출력에 나온 숫자가 입력 숫자 집합에 없거나, 지금과 다른 라벨, 합격 예측 표현('합격 가능성', '확률', '떨어질'), 2문장 초과가 있으면 문장 폐기 후 코드가 만든 기본 문장 사용. 보완할 게 없거나 계산할 요건이 없으면 LLM을 부르지 않는다 (구현 T10)
 - `draft_resume`: `project_id`가 역량 DB에 없으면 그 항목 제거
 - `parse_posting`: `job_category`가 분류 목록 밖이면 `기타` + 분류 불확실 처리
 
@@ -267,6 +267,7 @@ def route_after_decide(s) -> Literal["check_eligibility", "draft_resume", "save_
 | 호출 상한 초과 (`BudgetExceeded`) | 그 자리에서 `human_verify` 또는 종료 | "이 공고는 너무 길어서 일부만 분석했어요." |
 | 이미지 조각 8개 초과 | 앞 8개만 사용, 추출 신뢰도 낮음 | 확인 화면에서 해당 필드 표시 |
 | 사람 입력 형식 오류 | 거부하고 다시 멈춤 | 입력 화면에 오류 표시 |
+| 보완 포인트 LLM 실패, 호출 상한 초과 | 멈추지 않고 코드가 만든 기본 문장 사용. 보완 포인트는 보조 정보라서 (T10) | "불합격권, 적합도 42%, 필수 1/3개 충족. 먼저 보완할 요건: ..." |
 
 **재개 가능성**: 모든 실패는 체크포인터에 상태가 남은 채로 멈춘다. 같은 `thread_id`로 다시 실행하면 실패한 노드부터 이어진다.
 

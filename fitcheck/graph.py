@@ -5,7 +5,7 @@
 
 아직 구현하지 않은 노드는 자리표시자다.
 - collect_images: 이미지 공고 (T8). 지금은 안내 후 종료
-- summarize_gap: 보완 포인트 (T10), draft_resume: 이력서 방향 (T11)
+- draft_resume: 이력서 방향 (T11)
 
 설계와 다른 점: 파싱이 재시도까지 실패하면 설계는 사람 확인으로 보내지만, 고칠 공고 값 자체가 없어서
 지금은 안내 후 종료한다 (end_reason=parse_failed). 붙여넣기 다시 하기로 해결된다.
@@ -28,6 +28,7 @@ from pydantic import ValidationError
 from .budget import LLMBudget
 from .filters import education_tier, fit_band
 from .llm import BaseLLM
+from .nodes.gap import summarize_gap
 from .nodes.gate import (
     GateDeps,
     check_duplicate_node,
@@ -204,7 +205,7 @@ def human_verify_node(state: GraphState, deps: GraphDeps) -> dict:
 
 
 # ──────────────────────────────────────────────
-# 진단 (매칭과 보완 포인트는 자리표시자)
+# 진단 (매칭, 점수, 보완 포인트)
 # ──────────────────────────────────────────────
 
 
@@ -228,7 +229,10 @@ def score_node(state: GraphState, deps: GraphDeps) -> dict:
 
 
 def summarize_gap_node(state: GraphState, deps: GraphDeps) -> dict:
-    return {"gap_summary": ""}  # 자리표시자 (T10)
+    used = state.get("llm_calls", 0)
+    budget = LLMBudget(used=used)
+    out = summarize_gap(state["gap_report"], state["fit_band"], state["eligibility"], llm=deps.llm, budget=budget)
+    return {"gap_summary": out.text, "llm_calls": budget.used - used}
 
 
 # ──────────────────────────────────────────────

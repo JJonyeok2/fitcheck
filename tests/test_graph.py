@@ -154,19 +154,23 @@ def test_override_rejudges_and_changes_band(data_dir):
             {"req_index": 1, "strength": "직접 구현", "evidence_ids": ["p"]},
         ]
     }
-    # 매칭은 인정 전과 후에 한 번씩 돈다
-    graph, deps = make(data_dir, [_cert_required(), strong, strong])
+    # 매칭은 인정 전과 후에 한 번씩 돈다. 보완 포인트는 보류가 있는 첫 판정에서만 LLM을 부른다
+    # (인정 후에는 보류도 부족한 요건도 없어서 코드 문장)
+    note = {"summary": "정보처리기사 취득 여부를 먼저 확인해 주세요."}
+    graph, deps = make(data_dir, [_cert_required(), strong, note, strong])
     deps.db = CompetencyDB(
         projects=[Project(id="p", name="P", period="2026", my_role="1인", skills=["Python", "LangGraph"])]
     )
     pid = start(graph, "t1", text)["posting_id"]
     first = pending_interrupt(graph, "t1")
     assert first["band"] == "불합격권"
+    assert first["gap_summary"] == note["summary"]
     hold = next(c["id"] for c in first["checks"] if c["result"] == "hold")
 
     resume(graph, "t1", {"decision": "override", "condition_ids": [hold]})
     second = pending_interrupt(graph, "t1")
     assert second["kind"] == "decide" and second["band"] == "합격권"
+    assert "합격권" in second["gap_summary"] and deps.llm.responses == []
     assert next(c for c in second["checks"] if c["id"] == hold)["result"] == "pass"
     assert hold in deps.store.overrides(pid), "인정 기록은 저장소에 남는다"
 
@@ -243,12 +247,14 @@ def test_cli_analyze_then_resume(data_dir, tmp_path, monkeypatch, capsys):
     posting_file.write_text(TEXT, encoding="utf-8")
     monkeypatch.setenv("FIT_DATA_DIR", str(data_dir))
     judged = {"items": [{"req_index": 0, "strength": "직접 구현", "evidence_ids": ["sample-chatbot"]}]}
-    monkeypatch.setattr(cli, "_make_llm", lambda ledger: FakeLLM([extraction(), judged], ledger=ledger))
+    note = {"summary": "우대 요건 근거를 보강해 보세요."}
+    monkeypatch.setattr(cli, "_make_llm", lambda ledger: FakeLLM([extraction(), judged, note], ledger=ledger))
     monkeypatch.setattr(cli, "_today", lambda: TODAY)
 
     assert cli.main(["analyze", "--file", str(posting_file)]) == 0
     out = capsys.readouterr().out
     assert "지원 결정 대기" in out and "thread:" in out
+    assert "적합도" in out and "보완: 우대 요건 근거를 보강해 보세요." in out
     thread = out.split("thread:")[1].split()[0]
 
     assert cli.main(["resume", thread, "--decision", "apply"]) == 0
@@ -306,3 +312,24 @@ def test_tests_use_example_profile_not_local(monkeypatch):
     assert os.environ["FIT_PROFILE_FILE"] == str(EXAMPLE), "conftest 안전장치가 켜져 있어야 한다"
     _, _, db = load_profile()
     assert {p.id for p in db.projects} == {"sample-chatbot", "sample-dashboard"}
+
+
+# ── 보완 포인트 연결 (T10) ───────────────────────────────
+
+
+def test_gap_summary_reaches_decide(data_dir):
+    """역량이 비어 있으면 요건이 모두 '없음'이라 보완할 게 있다 → 보완 포인트 LLM 1회"""
+    text = "필수 요건에 맞는 프로젝트 근거가 아직 없어요. 핵심 요건부터 작은 프로젝트로 채워 보세요."
+    graph, deps = make(data_dir, [extraction(), {"summary": text}])
+    out = start(graph, "t1")
+    wait = pending_interrupt(graph, "t1")
+    assert wait["gap_summary"] == text
+    assert out["llm_calls"] == 2  # 파싱 1 + 보완 포인트 1 (후보가 없어 매칭은 0)
+
+
+def test_gap_summary_falls_back_without_llm_answer(data_dir):
+    """보완 포인트 LLM이 실패해도 결정 화면까지 간다 (코드가 만든 기본 문장)"""
+    graph, deps = make(data_dir, [extraction()])
+    start(graph, "t1")
+    wait = pending_interrupt(graph, "t1")
+    assert wait["kind"] == "decide" and wait["band"] in wait["gap_summary"]

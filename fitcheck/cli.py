@@ -24,6 +24,7 @@ from pathlib import Path
 from .config import ROOT, load_env, load_profile
 from .graph import FitGraph, GraphDeps, build_graph, pending_interrupt
 from .llm import BaseLLM, LLMError, UsageLedger, get_llm
+from .scoring import percent
 from .store import Store
 
 END_MESSAGES = {
@@ -83,7 +84,10 @@ def _report(graph: FitGraph, thread: str) -> None:
         return
 
     print(f"지원 결정 대기  thread: {thread}")
-    print(f"  {wait['company']} {wait['title']}  →  {wait['band']}")
+    score = "" if wait.get("fit_score") is None else f"  적합도 {percent(wait['fit_score'])}"
+    print(f"  {wait['company']} {wait['title']}  →  {wait['band']}{score}")
+    if wait.get("gap_summary"):
+        print(f"  보완: {wait['gap_summary']}")
     marks = {"pass": "✓", "hold": "△", "fail": "✕"}
     for c in wait["checks"]:
         extra = f" ({c['detail']})" if c["detail"] else ""
