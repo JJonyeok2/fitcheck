@@ -23,7 +23,7 @@ from ..aliases import canonical, skills_in
 from ..budget import LLMBudget
 from ..llm import BaseLLM, Purpose
 from ..schemas import CompetencyDB, JobPosting, MatchStrength, Project, Requirement, RequirementMatch
-from ..scoring import STRENGTH_CREDIT
+from ..scoring import STRENGTH_CREDIT, is_education_requirement
 
 PROMPT_VERSION = "match-v1"
 PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "match_requirements.md"
@@ -66,7 +66,7 @@ def _touched(p: Project) -> set[str]:
 
 
 def _candidates(r: Requirement, keys: set[str], db: CompetencyDB) -> list[Project]:
-    if r.category == "soft":
+    if r.category == "soft" or is_education_requirement(r):  # 학력 요건은 자격 필터가 판정
         return []
     if r.category in EXPERIENCE_CATEGORIES:
         return list(db.projects)

@@ -13,7 +13,7 @@ from typing import Literal
 from ..filters import check_eligibility, check_supported
 from ..schemas import GraphState, UserConstraints
 from ..store import Store
-from ..tracking import dedup_key
+from ..tracking import dedup_key, is_open_for_rejudge
 
 
 @dataclass
@@ -21,6 +21,7 @@ class GateDeps:
     store: Store
     me: UserConstraints
     today: date | None = None
+    fingerprint: str | None = None  # 지금 내 정보의 역량 지문. 바뀌었으면 같은 공고도 다시 판정
 
 
 # ── 노드 ────────────────────────────────────────────
@@ -37,6 +38,7 @@ def check_supported_node(state: GraphState, deps: GateDeps) -> dict:
 
 def check_duplicate_node(state: GraphState, deps: GateDeps) -> dict:
     """이미 분석한 공고면 URL만 덧붙이고 끝낸다. 아니면 공고를 저장하고 같은 회사 지원 이력을 찾는다.
+    단, 내 정보가 바뀌었고 결론이 안 난 기록(관심, 보류, 미지원)이면 다시 판정한다.
 
     '이미 분석함'의 기준은 지원 기록이 있는가다. 공고만 저장되고 기록이 없으면(분석 중단) 이어서 분석한다.
     """
@@ -54,6 +56,10 @@ def check_duplicate_node(state: GraphState, deps: GateDeps) -> dict:
             if url not in record.source_urls:
                 record.source_urls.append(url)
                 store.save_record(record)
+        if deps.fingerprint and is_open_for_rejudge(record, deps.fingerprint):
+            # 내 정보가 바뀌었고 아직 결론이 안 난 공고: 다시 판정한다 (지원 이력은 save_record가 이어 붙인다)
+            others = [r for r in store.already_applied(posting.company) if r.posting_id != record.posting_id]
+            return {"posting_id": record.posting_id, "already_applied": others, "rejudge": True}
         return {"end_reason": "duplicate", "posting_id": record.posting_id}
 
     pid = store.save_posting(posting, state["content_hash"], url)

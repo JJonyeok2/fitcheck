@@ -398,6 +398,9 @@ class GapReport(BaseModel):
     coverage_basis: Literal["required", "preferred", "responsibilities", "none"] = "required"
     preferred_coverage: float | None = Field(None, ge=0, le=1)
     soft_requirements: list[str] = Field(default_factory=list, description="충족률에서 제외한 소프트 스킬 요건")
+    excluded_requirements: list[str] = Field(
+        default_factory=list, description="학력, 전공 요건. 자격 필터에서 판정해서 점수에서 뺐다"
+    )
     strengths: list[str] = Field(default_factory=list)
     gaps: list[str] = Field(default_factory=list)
     summary: str = ""
@@ -487,6 +490,8 @@ class GraphState(TypedDict, total=False):
     fit_band: FitBand
     preferences: PreferenceResult
     gap_summary: str
+    rejudge: bool  # 내 정보가 바뀌어 같은 공고를 다시 판정하는 중
+    gap_summary_note: str  # 규칙 문장을 쓴 이유 (디버깅, fitcheck show --debug)
     gap_summary_refined: bool  # LLM으로 다듬기를 이미 시도했는가 (한 번만, FitGraph.refine_summary)
 
     # 사람 결정 (interrupt)

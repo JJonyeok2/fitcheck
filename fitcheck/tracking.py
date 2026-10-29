@@ -57,5 +57,12 @@ def competency_fingerprint(me: UserConstraints, db: CompetencyDB, profile=None) 
 
 def needs_rejudge(records: list[ApplicationRecord], fingerprint: str) -> list[ApplicationRecord]:
     """아직 결론이 안 난 공고 중 예전 역량으로 판정한 것"""
-    open_states = {ApplicationStatus.interested, ApplicationStatus.on_hold, ApplicationStatus.skipped}
-    return [r for r in records if not r.imported and r.status in open_states and r.judged_with != fingerprint]
+    return [r for r in records if is_open_for_rejudge(r, fingerprint)]
+
+
+OPEN_STATES = {ApplicationStatus.interested, ApplicationStatus.on_hold, ApplicationStatus.skipped}
+
+
+def is_open_for_rejudge(record: ApplicationRecord, fingerprint: str) -> bool:
+    """결론이 안 났고(관심, 보류, 미지원) 예전 내 정보로 판정한 기록. 지원 이후 단계는 건드리지 않는다."""
+    return not record.imported and record.status in OPEN_STATES and record.judged_with != fingerprint

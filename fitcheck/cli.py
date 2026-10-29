@@ -21,7 +21,7 @@ import uuid
 from datetime import date
 from pathlib import Path
 
-from .config import ROOT, load_env, load_full_profile
+from .config import EXAMPLE, ROOT, load_env, load_full_profile, profile_path
 from .graph import FitGraph, GraphDeps, build_graph, pending_interrupt
 from .llm import BaseLLM, LLMError, UsageLedger, get_llm
 from .profile import ProfileError
@@ -30,7 +30,6 @@ from .store import Store
 
 END_MESSAGES = {
     "unsupported": "IT 직무 공고가 아니라서 분석하지 않았어요.",
-    "duplicate": "이미 분석한 공고예요. 기존 기록에 이 주소만 덧붙였어요.",
     "saved": "저장했어요.",
 }
 
@@ -50,6 +49,12 @@ def _today() -> date:
 def _open() -> tuple[FitGraph, GraphDeps]:
     load_env()
     d = _data_dir()
+    if profile_path().resolve() == EXAMPLE.resolve():
+        print(
+            "! 내 정보 파일(competencies.local.yaml)이 없어서 공개용 예시 정보로 판정해요. "
+            "결과는 내 이력과 상관없어요. competencies.example.yaml을 복사해 내 정보로 바꿔 주세요.",
+            file=sys.stderr,
+        )
     profile = load_full_profile()
     today = _today()
     me, prefs, db = profile.constraints(today), profile.preferences(), profile.competency_db()
@@ -67,12 +72,46 @@ def _open() -> tuple[FitGraph, GraphDeps]:
     return build_graph(deps), deps
 
 
-def _report(graph: FitGraph, thread: str) -> None:
+def _duplicate_message(v: dict, deps: GraphDeps) -> str:
+    rec = deps.store.get_record(v["posting_id"]) if v.get("posting_id") else None
+    status = f" (지금 상태: {rec.status.value})" if rec else ""
+    added = " 이 주소를 기존 기록에 덧붙였어요." if v.get("input_url") else ""
+    return f"이미 분석한 공고예요{status}.{added} 내 정보가 바뀌면 다시 넣었을 때 다시 판정해요."
+
+
+STRENGTH_ORDER = ["직접 구현", "팀에서 담당", "사용 경험", "조금 만져봄", "없음"]
+
+
+def _print_matches(matches: list[dict]) -> None:
+    from .schemas import Requirement
+    from .scoring import is_education_requirement
+
+    for m in matches:
+        kind = "필수" if m["is_required"] else "우대"
+        text = m["text"] if len(m["text"]) <= 48 else m["text"][:47] + "…"
+        if is_education_requirement(Requirement(text=m["text"], category=m["category"])):
+            print(f"  · {kind} {text}  → 학력 조건이라 위 자격 칩에서 판정")
+            continue
+        if m["category"] == "soft":
+            print(f"  · {kind} {text}  → 소프트 스킬이라 점수에서 제외")
+            continue
+        evidence = f"  [{', '.join(m['evidence'])}]" if m["evidence"] else ""
+        print(f"  · {kind} {m['strength'] or '없음'}  {text}{evidence}")
+
+
+def _report(graph: FitGraph, thread: str, deps: GraphDeps, debug: bool = False) -> None:
     wait = pending_interrupt(graph, thread)
+    v = graph.values(thread)
+    if debug:
+        print(f"[debug] LLM 호출 {v.get('llm_calls', 0)}회")
+        if v.get("gap_summary_refined") and v.get("gap_summary_note"):
+            print(f"[debug] 보완 포인트는 규칙 문장: {v['gap_summary_note']}")
     if wait is None:
-        v = graph.values(thread)
         reason = v.get("end_reason")
-        msg = v.get("error") or v.get("unsupported_reason") or END_MESSAGES.get(reason, "끝났어요.")
+        if reason == "duplicate":
+            msg = _duplicate_message(v, deps)
+        else:
+            msg = v.get("error") or v.get("unsupported_reason") or END_MESSAGES.get(reason, "끝났어요.")
         print(msg)
         if reason == "saved" and v.get("application"):
             print(f"  상태: {v['application'].status.value}")
@@ -87,7 +126,8 @@ def _report(graph: FitGraph, thread: str) -> None:
         print(f"  고치기: fitcheck resume {thread} --fix 필드=값")
         return
 
-    print(f"지원 결정 대기  thread: {thread}")
+    title = "다시 판정 (내 정보가 바뀌었어요)" if v.get("rejudge") else "지원 결정 대기"
+    print(f"{title}  thread: {thread}")
     score = "" if wait.get("fit_score") is None else f"  적합도 {percent(wait['fit_score'])}"
     print(f"  {wait['company']} {wait['title']}  →  {wait['band']}{score}")
     if wait.get("gap_summary"):
@@ -98,6 +138,7 @@ def _report(graph: FitGraph, thread: str) -> None:
         print(f"  {marks[c['result']]} {c['label']}{extra}")
         if c["result"] == "hold":
             print(f'      인정하려면: fitcheck resume {thread} --override "{c["id"]}"')
+    _print_matches(wait.get("matches") or [])
     for r in wait["already_applied"]:
         print(f"  같은 회사 지원 기록: {r['title']} ({r['status']})")
     print(f"  결정: fitcheck resume {thread} --decision apply|hold|skip")
@@ -133,6 +174,7 @@ def main(argv: list[str] | None = None) -> int:
 
     s = sub.add_parser("show", help="분석 상태 보기")
     s.add_argument("thread")
+    s.add_argument("--debug", action="store_true", help="LLM 호출 수, 보완 포인트가 규칙 문장이 된 이유")
 
     args = parser.parse_args(argv)
     try:
@@ -171,7 +213,7 @@ def main(argv: list[str] | None = None) -> int:
             thread = args.thread
         if args.cmd != "show":
             graph.refine_summary(thread)  # 터미널은 기다려도 되니 바로 다듬는다 (화면은 백그라운드)
-        _report(graph, thread)
+        _report(graph, thread, deps, debug=getattr(args, "debug", False))
         return 0
     except LLMError as e:
         print(e.message, file=sys.stderr)

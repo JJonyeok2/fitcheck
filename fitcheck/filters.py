@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import date
 
 from .schemas import (
@@ -93,7 +94,7 @@ def check_eligibility(
     else:
         add("학력", edu_label, "pass")
     if edu.majors:
-        ok = any(m in me.major for m in edu.majors)
+        ok = any(major_matches(m, me.major) for m in edu.majors)
         add("학력", f"전공 {', '.join(edu.majors)}", "pass" if ok else "hold", "" if ok else "관련 전공 인정 여부 확인")
 
     # 졸업 요건
@@ -319,3 +320,36 @@ def sort_key(band: FitBand, tier: EducationTier, gap: GapReport | None) -> tuple
     """라벨 → 학력 우선순위(학사 기준 공고 먼저) → 적합도 점수 순."""
     coverage = gap.fit_score if gap and gap.fit_score is not None else 0.0
     return (BAND_ORDER[band], tier.value, -coverage)
+
+
+# 전공 계열 (Spec 5.1). 'IT인공지능학부'가 'Computer Science 또는 관련 전공'을 통과하도록.
+# 영어 약어(AI, IT, CS, SW)는 단어 경계로만 찾는다 ('Digital' 안의 'it'은 아님).
+CS_MAJOR_WORDS = ["컴퓨터", "소프트웨어", "전산", "정보", "인공지능", "데이터", "통신", "computer", "software", "data"]
+CS_MAJOR_ABBR = ["ai", "it", "cs", "sw"]
+STEM_WORDS = ["이공", "공학", "공과", "전기", "전자", "수학", "통계", "물리", "자연과학"]
+RELATED_WORDS = ["관련 전공", "관련전공", "관련학과", "관련 학과", "관련 계열", "유관 전공"]
+
+
+def _has(text: str, words: list[str], abbr: list[str] = ()) -> bool:
+    low = text.lower()
+    return any(w in low for w in words) or any(re.search(rf"(?<![a-z]){a}(?![a-z])", low) for a in abbr)
+
+
+def is_cs_major(text: str) -> bool:
+    return _has(text, CS_MAJOR_WORDS, CS_MAJOR_ABBR)
+
+
+def major_matches(required: str, mine: str) -> bool:
+    """요구 전공 문구에 내 전공이 해당하는가.
+    - 문구가 내 전공을 그대로 포함하면 통과
+    - 문구가 컴퓨터 계열을 말하거나 '관련 전공'(IT 공고라 컴퓨터 계열로 본다)이고, 내 전공이 컴퓨터 계열이면 통과
+    - 문구가 '이공계'이고 내 전공이 컴퓨터 계열 또는 이공 계열이면 통과
+    """
+    if not mine:
+        return False
+    if mine in required or required in mine:
+        return True
+    mine_cs = is_cs_major(mine)
+    if mine_cs and (is_cs_major(required) or _has(required, RELATED_WORDS)):
+        return True
+    return _has(required, ["이공"]) and (mine_cs or _has(mine, STEM_WORDS))

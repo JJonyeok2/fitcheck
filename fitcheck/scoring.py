@@ -20,9 +20,20 @@
 
 from __future__ import annotations
 
-from .schemas import GapReport, RequirementMatch, ScoreItem
+import re
+
+from .schemas import GapReport, Requirement, RequirementMatch, ScoreItem
 
 EXCLUDED_CATEGORIES = {"soft"}
+
+# 학력, 전공 요건은 자격 필터(filters.check_eligibility)에서 판정한다. 매칭과 점수에 또 넣으면 두 번 세게 된다.
+# '졸업작품' 같은 낱말은 학력 요건이 아니다.
+_EDU_PATTERN = re.compile(r"(전공|학위|학사|석사|박사|대졸|초대졸|고졸|(?<!작품)졸업(?!작품)|학력)")
+
+
+def is_education_requirement(r: Requirement) -> bool:
+    return r.category in ("skill", "domain", "etc") and bool(_EDU_PATTERN.search(r.text))
+
 
 STRENGTH_CREDIT = {"직접 구현": 1.0, "팀에서 담당": 0.85, "사용 경험": 0.6, "조금 만져봄": 0.3, "없음": 0.0}
 STATUS_FALLBACK = {"matched": ("직접 구현", 1.0), "partial": ("조금 만져봄", 0.5), "missing": ("없음", 0.0)}
@@ -51,7 +62,7 @@ def weight_of(m: RequirementMatch) -> float:
 def _items(matches: list[RequirementMatch]) -> list[ScoreItem]:
     out = []
     for m in matches:
-        if m.requirement.category in EXCLUDED_CATEGORIES:
+        if m.requirement.category in EXCLUDED_CATEGORIES or is_education_requirement(m.requirement):
             continue
         label, c = credit_of(m)
         out.append(
@@ -86,6 +97,7 @@ def build_gap_report(
 ) -> GapReport:
     """responsibilities: 담당업무를 요건처럼 매칭한 결과 (필수와 우대가 모두 비었을 때만 매칭기가 만든다)"""
     soft = [m.requirement.text for m in required + preferred if m.requirement.category in EXCLUDED_CATEGORIES]
+    edu = [m.requirement.text for m in required + preferred if is_education_requirement(m.requirement)]
     req_items, pref_items = _items(required), _items(preferred)
 
     items, basis = req_items + pref_items, "required"
@@ -108,6 +120,7 @@ def build_gap_report(
         coverage_basis=basis,
         preferred_coverage=_score(pref_items),
         soft_requirements=soft,
+        excluded_requirements=edu,
         strengths=strengths,
         gaps=gaps,
     )

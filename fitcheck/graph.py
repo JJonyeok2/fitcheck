@@ -20,6 +20,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command, interrupt
@@ -81,7 +82,12 @@ class GraphDeps:
 
     @property
     def gate(self) -> GateDeps:
-        return GateDeps(store=self.store, me=self.me, today=self.today)
+        return GateDeps(
+            store=self.store,
+            me=self.me,
+            today=self.today,
+            fingerprint=competency_fingerprint(self.me, self.db, self.profile),
+        )
 
 
 # ──────────────────────────────────────────────
@@ -302,6 +308,8 @@ def save_record_node(state: GraphState, deps: GraphDeps) -> dict:
         status, memo = ApplicationStatus.skipped, "지원 불가: " + "; ".join(e.reasons)
     else:
         status, memo = STATUS_BY_DECISION[state["decision"]], ""
+    previous = deps.store.get_record(pid)  # 다시 판정한 공고면 예전 이력을 이어 붙인다
+    history = [*(previous.history if previous else []), StatusChange(status=status, memo=memo)]
     rec = ApplicationRecord(
         posting_id=pid,
         dedup_key=dedup_key(p.company, p.title),
@@ -310,7 +318,7 @@ def save_record_node(state: GraphState, deps: GraphDeps) -> dict:
         source_urls=deps.store.source_urls(pid),
         deadline=p.deadline,
         status=status,
-        history=[StatusChange(status=status, memo=memo)],
+        history=history,
         overrides=sorted(deps.store.overrides(pid)),
         judged_with=competency_fingerprint(deps.me, deps.db, deps.profile),
     )
@@ -379,7 +387,12 @@ class FitGraph:
         out = summarize_gap(v["gap_report"], v["fit_band"], v["eligibility"], llm=self._deps.llm, budget=budget)
         self.app.update_state(
             cfg,
-            {"gap_summary": out.text, "gap_summary_refined": True, "llm_calls": budget.used - used},
+            {
+                "gap_summary": out.text,
+                "gap_summary_refined": True,
+                "gap_summary_note": out.reason if out.source == "rule" else "",
+                "llm_calls": budget.used - used,
+            },
             as_node="summarize_gap",
         )
         self.app.invoke(None, cfg)  # 결정 화면을 새 문장으로 다시 띄운다
@@ -434,4 +447,22 @@ def build_graph(deps: GraphDeps) -> FitGraph:
 
     deps.checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(deps.checkpoint_path), check_same_thread=False)
-    return FitGraph(g.compile(checkpointer=SqliteSaver(conn)), conn, deps)
+    return FitGraph(g.compile(checkpointer=SqliteSaver(conn, serde=_serde())), conn, deps)
+
+
+def _serde() -> JsonPlusSerializer:
+    """체크포인트에 저장하는 우리 타입(schemas의 모델과 열거형)을 등록한다.
+    등록하지 않으면 다시 읽을 때마다 LangGraph가 경고를 내고, 다음 버전부터는 막힌다."""
+    import enum
+    import inspect
+
+    from pydantic import BaseModel
+
+    from . import schemas
+
+    allowed = [
+        (schemas.__name__, name)
+        for name, obj in vars(schemas).items()
+        if inspect.isclass(obj) and obj.__module__ == schemas.__name__ and issubclass(obj, (BaseModel, enum.Enum))
+    ]
+    return JsonPlusSerializer(allowed_msgpack_modules=allowed)
