@@ -40,10 +40,15 @@ def already_applied_to(company: str, records: list[ApplicationRecord]) -> list[A
     return [r for r in records if r.dedup_key.split("::")[0] == key and r.status in done]
 
 
-def competency_fingerprint(me: UserConstraints, db: CompetencyDB) -> str:
-    """판정에 영향을 주는 내 정보의 지문. 자격증 취득, 프로젝트 추가 등으로 바뀌면 값이 달라진다."""
+def competency_fingerprint(me: UserConstraints, db: CompetencyDB, profile=None) -> str:
+    """판정에 영향을 주는 내 정보의 지문. 자격증 취득, 프로젝트 추가 등으로 바뀌면 값이 달라진다.
+
+    profile(이력서 구조)을 주면 교육 이수, 취업 우대사항, 희망 조건 같은 판정 항목도 넣는다.
+    한 방향 해시라 민감 항목이 들어가도 값을 되돌릴 수 없다.
+    """
+    extra = profile.judgement_payload() if profile is not None else None
     payload = json.dumps(
-        {"me": me.model_dump(mode="json"), "db": db.model_dump(mode="json")},
+        {"me": me.model_dump(mode="json"), "db": db.model_dump(mode="json"), "profile": extra},
         ensure_ascii=False,
         sort_keys=True,
     )

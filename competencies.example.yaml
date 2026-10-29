@@ -1,34 +1,47 @@
-# 역량 DB 예시 — 이 파일을 competencies.local.yaml로 복사해서 내 정보로 바꾼다.
-# competencies.local.yaml은 Git에 올라가지 않는다.
+# 내 정보 예시 — 이력서 구조 (Spec 7장)
+# 이 파일을 competencies.local.yaml로 복사해서 내 정보로 바꾼다. competencies.local.yaml은 Git에 올라가지 않는다.
+# 여기 값은 모두 가상이다.
 #
-# 원칙: skills에는 "이 프로젝트에서 본인이 직접 쓴 기술"만 넣는다.
-#       팀 프로젝트에서 다른 팀원이 맡은 기술은 넣지 않는다.
-#       연락처, 주민번호 같은 개인정보는 넣지 않는다.
+# 원칙
+# - 사람인, 원티드 이력서와 같은 순서. 신입이면 경력기술서 자리에 프로젝트를 쓴다
+# - 스킬은 따로 쓰지 않는다. 프로젝트의 skills(직접 쓴 기술)에서 모은다
+# - 팀 프로젝트에서 다른 팀원이 맡은 기술은 넣지 않는다
+# - 이름, 연락처, 사진, 성별, 주민번호는 넣지 않는다
+# - 민감 항목(생년월일, 취업 우대사항)은 판정 코드에만 쓰고 LLM과 로그로 보내지 않는다. 비워 두면 "입력 안 함"
 
-constraints:
-  experience_years: 0
-  degree: 학사                          # 무관 / 고졸 / 전문학사 / 학사 / 석사 / 박사
-  major: 컴퓨터공학
-  graduated: true
-  graduation_date: 2025-08-31
-  military_done: true                   # 군필 또는 면제
-  certificates: []                      # 취득 완료한 것만
-  pending_certificates:                 # 필수인 공고는 발표일과 마감일을 비교해 보류 또는 탈락
-    - name: 정보처리기사
-      expected_date: null
-  languages:
-    - language: 영어
-      level: 일상회화                    # 기초 / 독해/작문 / 일상회화 / 비즈니스 / 원어민
-      tests: []                         # 예: {test: TOEIC, score: 800}, {test: OPIc, grade: IM2}
-  allowed_regions: [서울, 성남]          # 판교, 분당 등 동네 이름은 filters.REGION_ALIASES로 매칭
-  excluded_employment_types: [파트타임, 계약직]
+# 1. 기본 정보
+basic:
+  birth_date: null                      # 민감. 청년(만 나이) 기준 공고에만 쓴다
 
-preferences:                            # 라벨에는 영향 없음. '선호 n/m'으로만 표시
-  min_salary: 3000                      # 만원 단위
-  want_mentor: true
-  company_stages: [Series A, Series B, 상장/대기업]   # 비어 있으면 제한 없음
-  work_modes: []                        # 비어 있으면 제한 없음. 예: [하이브리드, 원격]
+# 2. 학력 (졸업, 졸업예정 중 가장 높은 학위로 판정. 재학, 중퇴는 제외)
+education:
+  - school: 샘플고등학교
+    location: 서울
+    degree: 고졸                        # 무관 / 고졸 / 전문학사 / 학사 / 석사 / 박사
+    status: 졸업                        # 졸업 / 졸업예정 / 재학 / 중퇴
+    graduation_date: 2019-02-10
+  - school: 샘플대학교
+    location: 서울                      # 학교 소재지 시도. 지역인재 판정
+    major: 컴퓨터공학
+    degree: 학사
+    status: 졸업
+    admitted: 2019-03-02
+    graduation_date: 2025-08-31
+    gpa: ""                             # 선택
 
+# 3. 경력 (정규직, 계약직만 경력 연차로 센다. 아르바이트는 도메인 경험 근거로만)
+careers:
+  - company: 샘플카페
+    kind: 아르바이트                    # 정규직 / 계약직 / 인턴 / 아르바이트
+    start: 2023.03
+    end: 2023.08
+    role: 매장 운영
+    tasks:
+      - 주문 응대와 재고 정리
+experience_years_manual: null           # 경력 기간을 직접 정하고 싶을 때만 (예: 1.5)
+intern_counts_as_experience: false
+
+# 4. 프로젝트 (경력기술서)
 projects:
   - id: sample-chatbot
     name: 사내 문서 Q&A 챗봇
@@ -52,3 +65,65 @@ projects:
     results: []
     skills: [React, TypeScript]     # 백엔드는 다른 팀원 담당이라 제외
     touched_skills: [AWS]           # 조금 만져본 기술. 매칭에서 '조금 만져봄'(0.3)까지만 인정
+
+# 5. 경험, 활동, 교육
+trainings:
+  - name: 샘플 AI 부트캠프
+    institution: 샘플교육원
+    category: K-디지털 트레이닝         # 교육과정 수료가 필수인 공고에서 확인
+    start: 2025.10
+    end: 2026.03
+    completed: true
+activities:
+  - name: 샘플 개발 동아리
+    kind: 동아리
+    period: 2022 ~ 2023
+    description: 스터디 운영
+
+# 6. 자격증
+certificates:
+  acquired: []                          # 예: {name: SQLD, date: 2025-06-01}
+  pending:                              # 필수인 공고는 발표일과 마감일을 비교해 보류 또는 탈락
+    - name: 정보처리기사
+      expected_date: null
+
+# 7. 어학
+languages:
+  - language: 영어
+    level: 일상회화                      # 기초 / 독해/작문 / 일상회화 / 비즈니스 / 원어민
+    tests: []                           # 예: {test: TOEIC, score: 800}, {test: OPIc, grade: IM2}
+
+# 8. 수상 (이력서 방향에만 쓴다)
+awards:
+  - name: 샘플 해커톤 우수상
+    host: 샘플재단
+    date: 2025-11-20
+
+# 9. 스킬: 따로 쓰지 않는다 (프로젝트에서 모음)
+
+# 10. 포트폴리오, 링크
+links:
+  - kind: GitHub
+    url: https://github.com/example
+
+# 11. 취업 우대사항 (병역 외에는 민감. null이면 "입력 안 함")
+employment_support:
+  military: 군필                        # 군필 / 면제 / 미필 / 해당 없음
+  veteran: null                         # 국가보훈 취업지원대상자 (true/false)
+  disabled: null                        # 장애인 (true/false)
+  national_employment_support: null     # 국민취업지원제도 참여 (true/false)
+  others: null                          # 예: [북한이탈주민, 다문화가족, 경력단절, 저소득층, 한부모]
+
+# 12. 희망 근무 조건
+desired:
+  regions: [서울, 성남]                  # 판교, 분당 등 동네 이름은 filters.REGION_ALIASES로 매칭. 비우면 제한 없음
+  excluded_employment_types: [파트타임, 계약직]
+  roles: [AI/데이터, AX/자동화, 개발]
+  min_salary: 3000                      # 만원 단위. 아래는 라벨에는 영향 없이 '선호 n/m'으로만 표시
+  want_mentor: true
+  company_stages: [Series A, Series B, 상장/대기업]
+  work_modes: []                        # 비어 있으면 제한 없음. 예: [하이브리드, 원격]
+  overseas_travel_ok: true
+
+# 13. 간단 소개 (선택, 이력서 방향에만)
+intro: 업무 자동화와 LLM 서비스를 만드는 신입 개발자입니다.

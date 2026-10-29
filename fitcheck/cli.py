@@ -21,9 +21,10 @@ import uuid
 from datetime import date
 from pathlib import Path
 
-from .config import ROOT, load_env, load_profile
+from .config import ROOT, load_env, load_full_profile
 from .graph import FitGraph, GraphDeps, build_graph, pending_interrupt
 from .llm import BaseLLM, LLMError, UsageLedger, get_llm
+from .profile import ProfileError
 from .scoring import percent
 from .store import Store
 
@@ -49,15 +50,18 @@ def _today() -> date:
 def _open() -> tuple[FitGraph, GraphDeps]:
     load_env()
     d = _data_dir()
-    me, prefs, db = load_profile()
+    profile = load_full_profile()
+    today = _today()
+    me, prefs, db = profile.constraints(today), profile.preferences(), profile.competency_db()
     ledger = UsageLedger(d / "usage.sqlite")
     deps = GraphDeps(
         store=Store(d / "fitcheck.sqlite"),
         me=me,
         prefs=prefs,
         db=db,
+        profile=profile,
         llm=_make_llm(ledger),
-        today=_today(),
+        today=today,
         checkpoint_path=d / "checkpoints.sqlite",
     )
     return build_graph(deps), deps
@@ -135,6 +139,9 @@ def main(argv: list[str] | None = None) -> int:
         graph, deps = _open()
     except LLMError as e:
         print(e.message, file=sys.stderr)
+        return 2
+    except ProfileError as e:
+        print(e, file=sys.stderr)
         return 2
 
     try:

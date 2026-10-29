@@ -42,6 +42,7 @@ from .nodes.match import match_requirements
 from .nodes.normalize import PlaywrightFetcher, normalize_input
 from .nodes.parse import parse_posting
 from .preferences import check_preferences
+from .profile import Profile
 from .schemas import (
     ApplicationRecord,
     ApplicationStatus,
@@ -76,6 +77,7 @@ class GraphDeps:
     prefs: UserPreferences = field(default_factory=UserPreferences)
     db: CompetencyDB = field(default_factory=lambda: CompetencyDB(projects=[]))
     fetcher: PlaywrightFetcher | None = None
+    profile: Profile | None = None  # 이력서 구조 전체. 역량 지문에만 쓴다 (민감 항목은 LLM에 보내지 않음)
 
     @property
     def gate(self) -> GateDeps:
@@ -310,7 +312,7 @@ def save_record_node(state: GraphState, deps: GraphDeps) -> dict:
         status=status,
         history=[StatusChange(status=status, memo=memo)],
         overrides=sorted(deps.store.overrides(pid)),
-        judged_with=competency_fingerprint(deps.me, deps.db),
+        judged_with=competency_fingerprint(deps.me, deps.db, deps.profile),
     )
     deps.store.save_record(rec)
     return {"application": rec, "end_reason": "saved"}
